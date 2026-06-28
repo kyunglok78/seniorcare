@@ -209,7 +209,7 @@ function fetchFacilityData() {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=1000`;
+    const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=200`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
 
