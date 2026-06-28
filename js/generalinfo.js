@@ -194,19 +194,26 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
     });
 }
 
+// ----------------------------------------------------
+// [API 호출 및 리스트 업데이트 - CORS 프록시 적용 및 1000건 호출]
+// ----------------------------------------------------
 function fetchFacilityData() {
     if(!mapInstance) return;
     clearMap();
     globalFacilityList = [];
-    document.getElementById('search-facility-input').value = '';
+    const searchInput = document.getElementById('search-facility-input');
+    if(searchInput) searchInput.value = '';
     
     mapInstance.setLevel(8);
     updateFacilityListUI([]); 
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
-    const url = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=100`;
+    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+    const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=1000`;
 
-    fetch(url)
+    console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
+
+    fetch(proxyUrl + targetUrl)
         .then(res => {
             if(!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
             return res.text();
@@ -214,11 +221,15 @@ function fetchFacilityData() {
         .then(str => {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(str, "text/xml");
+            
+            // 공공 API 에러 메시지가 있는지 먼저 확인
             const errorNode = xmlDoc.getElementsByTagName("returnAuthMsg")[0] || xmlDoc.getElementsByTagName("errMsg")[0];
             if(errorNode) throw new Error(errorNode.textContent);
 
             const items = xmlDoc.getElementsByTagName("item");
             if(items.length === 0) throw new Error("데이터가 없습니다.");
+
+            console.log(`성공! ${items.length}개의 데이터를 불러왔습니다.`);
 
             for (let i = 0; i < items.length; i++) {
                 const name = items[i].getElementsByTagName("instNm")[0]?.textContent || items[i].getElementsByTagName("sigunguNm")[0]?.textContent || "장기요양기관";
@@ -227,18 +238,20 @@ function fetchFacilityData() {
 
                 const facObj = { name: name, addr: addr, adminCd: adminCd, isCustom: false };
                 globalFacilityList.push(facObj);
+                
+                // 마커 그리기 함수 호출
                 drawMarker(name, addr, adminCd, false);
             }
             updateFacilityListUI(globalFacilityList);
         })
         .catch(err => {
-            console.error("연동 실패:", err.message);
+            console.error("API 연동 실패 (CORS 문제 또는 네트워크 지연):", err.message);
             loadMockFacilities(); 
         });
 }
 
 // ----------------------------------------------------
-// [상세 정보 연동 및 예외 처리]
+// [상세 정보 연동 및 예외 처리 - CORS 프록시 적용]
 // ----------------------------------------------------
 async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(!adminCd) return;
@@ -250,7 +263,7 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
     document.getElementById('btn-add-gen-row').style.display = isCustom ? 'block' : 'none';
     document.getElementById('btn-add-fac-row').style.display = isCustom ? 'block' : 'none';
 
-    // 1. 수동 추가 (커스텀 에디터 모드) - 항목 대폭 추가
+    // 1. 수동 추가 (커스텀 에디터 모드)
     if (isCustom) {
         if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.9rem; color:#10b981;">(수동 추가 - 표 내부를 클릭하여 수정)</span>`;
         
@@ -314,7 +327,7 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
         return; 
     }
 
-    // 2. 더미 데이터 테스트 모드 (항목 대폭 추가)
+    // 2. 더미 데이터 테스트 모드
     if (adminCd === 'test1' || adminCd === 'test2') {
         if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.8rem; color:#f59e0b;">(테스트용 가상 데이터 로딩완료)</span>`;
         
@@ -352,11 +365,12 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.8rem; color:#f59e0b;">(공공데이터 로딩중...)</span>`;
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
+    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
     const url1 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getGeneralSttusDetailInfoItem02?serviceKey=${apiKey}&adminPymntCd=${adminCd}`;
     const url2 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getInsttSttusDetailInfoItem02?serviceKey=${apiKey}&adminPymntCd=${adminCd}`;
 
     try {
-        const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
+        const [res1, res2] = await Promise.all([fetch(proxyUrl + url1), fetch(proxyUrl + url2)]);
         const text1 = await res1.text();
         const text2 = await res2.text();
         const parser = new DOMParser();
@@ -409,7 +423,7 @@ function addCustomRow(targetDivId) {
 function loadMockFacilities() {
     globalFacilityList = [
         { name: "KB골든라이프케어 서초빌리지", addr: "서울 서초구 우면동 604", lat: 37.4589, lng: 127.0182, adminCd: "test1", isCustom: false },
-        { name: "KB골든라이프케어 위례빌리지", addr: "서울 송파구 위례광장로 290", lat: 37.4789, lng: 127.1428, adminCd: "test2", isCustom: false }
+        { name: "KB골든라이프케어 위례빌리지", addr: "서울 송파구 위례광장로 290", margin: 0, lat: 37.4789, lng: 127.1428, adminCd: "test2", isCustom: false }
     ];
 
     globalFacilityList.forEach((fac, idx) => {
