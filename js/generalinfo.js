@@ -171,7 +171,7 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
     });
 }
 
-// [3] 공공데이터 리스트 호출 (가이드 명세 + 안전한 인코딩 캡슐 적용)
+// [3] 공공데이터 리스트 호출 (안전 우회 모드 적용)
 function fetchFacilityData() {
     if(!mapInstance) return;
     clearMap();
@@ -184,19 +184,20 @@ function fetchFacilityData() {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     
-    // 💡 가장 안정적인 무료 프록시 서버 사용
-    const proxyUrl = "https://api.allorigins.win/raw?url=";
+    // 💡 변경점 1: raw 대신 get을 사용하여 JSON 상자로 포장
+    const proxyUrl = "https://api.allorigins.win/get?url=";
     const targetUrl = `https://apis.data.go.kr/B550928/longTermCareInstInfoService01/getLongTermCareInstInfo?serviceKey=${apiKey}&pageNo=1&numOfRows=50`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
 
-    // 💡 핵심: encodeURIComponent()를 사용해 주소를 안전하게 캡슐화
     fetch(proxyUrl + encodeURIComponent(targetUrl))
         .then(res => {
             if(!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
-            return res.text();
+            return res.json(); // 💡 변경점 2: JSON으로 응답받기
         })
-        .then(str => {
+        .then(data => {
+            // 💡 변경점 3: JSON 상자 안의 contents 에서 진짜 XML 텍스트 꺼내기
+            const str = data.contents;
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(str, "text/xml");
             
@@ -229,7 +230,7 @@ function fetchFacilityData() {
         });
 }
 
-// [4] 상세 정보 호출 (가이드 명세 + 안전한 인코딩 캡슐 적용)
+// [4] 상세 정보 호출 (안전 우회 모드 적용)
 async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(!adminCd) return;
 
@@ -261,8 +262,8 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     
-    // 💡 가장 안정적인 무료 프록시 서버 사용
-    const proxyUrl = "https://api.allorigins.win/raw?url=";
+    // 💡 상세 정보도 마찬가지로 JSON 상자 포장 방식 적용
+    const proxyUrl = "https://api.allorigins.win/get?url=";
     
     const selectedFac = globalFacilityList.find(f => f.adminCd === adminCd);
     const pttnCd = selectedFac ? selectedFac.adminPttnCd : 'A03';
@@ -271,17 +272,19 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
     const url2 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getInsttSttusDetailInfoItem02?serviceKey=${apiKey}&longTermAdminSym=${adminCd}&adminPttnCd=${pttnCd}`;
 
     try {
-        // 💡 여기도 encodeURIComponent 적용
         const [res1, res2] = await Promise.all([
             fetch(proxyUrl + encodeURIComponent(url1)), 
             fetch(proxyUrl + encodeURIComponent(url2))
         ]);
-        const text1 = await res1.text();
-        const text2 = await res2.text();
+        
+        // 💡 JSON으로 받기
+        const data1 = await res1.json();
+        const data2 = await res2.json();
         
         const parser = new DOMParser();
-        const xml1 = parser.parseFromString(text1, "text/xml");
-        const xml2 = parser.parseFromString(text2, "text/xml");
+        // 💡 contents 안에서 XML 꺼내기
+        const xml1 = parser.parseFromString(data1.contents, "text/xml");
+        const xml2 = parser.parseFromString(data2.contents, "text/xml");
 
         const parseGeneralInfo = (xmlDoc) => {
             const item = xmlDoc.getElementsByTagName("item")[0];
