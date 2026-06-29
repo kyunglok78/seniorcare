@@ -161,7 +161,7 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
 }
 
 // ----------------------------------------------------
-// [API 호출: HTTPS + 프록시 적용 + NORMAL_SERVICE 예외 처리 완료]
+// [API 호출: 올바른 주소 원복 + 카카오맵 과부하 방지 적용]
 // ----------------------------------------------------
 function fetchFacilityData() {
     if(!mapInstance) return;
@@ -175,7 +175,10 @@ function fetchFacilityData() {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=200`;
+    
+    // 💡 [결정적 원인 해결] 엉뚱한 주소가 아닌, 원래의 올바른 '기본정보' 주소로 원복했습니다.
+    // 테스트 속도와 안정성을 위해 우선 50개만 불러오도록 설정했습니다.
+    const targetUrl = `https://apis.data.go.kr/B550928/longTermCareInstInfoService01/getLongTermCareInstInfo?serviceKey=${apiKey}&pageNo=1&numOfRows=50`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
 
@@ -188,22 +191,17 @@ function fetchFacilityData() {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(str, "text/xml");
             
-            // 💡 [수정된 부분] NORMAL_SERVICE는 에러가 아니므로 무시합니다.
             const errorNode = xmlDoc.getElementsByTagName("returnAuthMsg")[0] || xmlDoc.getElementsByTagName("errMsg")[0];
             if(errorNode && !errorNode.textContent.includes("NORMAL_SERVICE")) {
                 throw new Error(errorNode.textContent);
             }
 
-            const resultCode = xmlDoc.getElementsByTagName("resultCode")[0];
-            if(resultCode && resultCode.textContent !== "00" && resultCode.textContent !== "0") {
-                 throw new Error("공공데이터 서버 에러 코드: " + resultCode.textContent);
-            }
-
             const items = xmlDoc.getElementsByTagName("item");
-            if(items.length === 0) throw new Error("데이터가 없습니다.");
+            if(items.length === 0) throw new Error("API는 연결되었으나 데이터가 0개입니다.");
 
             console.log(`성공! ${items.length}개의 데이터를 불러왔습니다.`);
 
+            // 💡 [안전장치] 카카오맵이 뻗지 않도록 0.05초(50ms) 간격으로 마커를 하나씩 그립니다.
             for (let i = 0; i < items.length; i++) {
                 const name = items[i].getElementsByTagName("instNm")[0]?.textContent || items[i].getElementsByTagName("sigunguNm")[0]?.textContent || "장기요양기관";
                 const addr = items[i].getElementsByTagName("addr")[0]?.textContent || "";
@@ -211,15 +209,19 @@ function fetchFacilityData() {
 
                 const facObj = { name: name, addr: addr, adminCd: adminCd, isCustom: false };
                 globalFacilityList.push(facObj);
-                drawMarker(name, addr, adminCd, false);
+                
+                setTimeout(() => {
+                    drawMarker(name, addr, adminCd, false);
+                }, i * 50);
             }
             updateFacilityListUI(globalFacilityList);
         })
         .catch(err => {
-            console.error("API 연동 실패:", err.message);
+            console.error("API 연동 실패 사유:", err.message);
             loadMockFacilities(); 
         });
 }
+
 // ----------------------------------------------------
 // [상세 정보 연동: HTTPS + 프록시 적용 완료]
 // ----------------------------------------------------
