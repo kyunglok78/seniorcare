@@ -171,7 +171,7 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
     });
 }
 
-// [3] 공공데이터 리스트 호출 (가이드 명세 완벽 반영)
+// [3] 공공데이터 리스트 호출 (가이드 명세 + 안전한 인코딩 캡슐 적용)
 function fetchFacilityData() {
     if(!mapInstance) return;
     clearMap();
@@ -183,13 +183,15 @@ function fetchFacilityData() {
     updateFacilityListUI([]); 
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
-    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    // 💡 목록 조회용 API URL
+    
+    // 💡 가장 안정적인 무료 프록시 서버 사용
+    const proxyUrl = "https://api.allorigins.win/raw?url=";
     const targetUrl = `https://apis.data.go.kr/B550928/longTermCareInstInfoService01/getLongTermCareInstInfo?serviceKey=${apiKey}&pageNo=1&numOfRows=50`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
 
-    fetch(proxyUrl + targetUrl)
+    // 💡 핵심: encodeURIComponent()를 사용해 주소를 안전하게 캡슐화
+    fetch(proxyUrl + encodeURIComponent(targetUrl))
         .then(res => {
             if(!res.ok) throw new Error(`HTTP 에러: ${res.status}`);
             return res.text();
@@ -209,10 +211,8 @@ function fetchFacilityData() {
             for (let i = 0; i < items.length; i++) {
                 const name = items[i].getElementsByTagName("instNm")[0]?.textContent || items[i].getElementsByTagName("adminNm")[0]?.textContent || "장기요양기관";
                 const addr = items[i].getElementsByTagName("addr")[0]?.textContent || "";
-                
-                // 💡 상세 조회를 위한 핵심 키 2개 추출 (기관코드 & 유형코드)
                 const adminCd = items[i].getElementsByTagName("longTermAdminSym")[0]?.textContent || items[i].getElementsByTagName("adminPymntCd")[0]?.textContent || "";
-                const adminPttnCd = items[i].getElementsByTagName("adminPttnCd")[0]?.textContent || "A03"; // 없을 경우 기본값 노인요양시설
+                const adminPttnCd = items[i].getElementsByTagName("adminPttnCd")[0]?.textContent || "A03"; 
 
                 const facObj = { name: name, addr: addr, adminCd: adminCd, adminPttnCd: adminPttnCd, isCustom: false };
                 globalFacilityList.push(facObj);
@@ -229,7 +229,7 @@ function fetchFacilityData() {
         });
 }
 
-// [4] 상세 정보 호출 (가이드 명세 기반 파싱)
+// [4] 상세 정보 호출 (가이드 명세 + 안전한 인코딩 캡슐 적용)
 async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(!adminCd) return;
 
@@ -260,18 +260,22 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.8rem; color:#f59e0b;">(공공데이터 로딩중...)</span>`;
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
-    const proxyUrl = "https://corsproxy.io/?";
     
-    // 💡 현재 선택된 기관의 상세 파라미터 찾기
+    // 💡 가장 안정적인 무료 프록시 서버 사용
+    const proxyUrl = "https://api.allorigins.win/raw?url=";
+    
     const selectedFac = globalFacilityList.find(f => f.adminCd === adminCd);
     const pttnCd = selectedFac ? selectedFac.adminPttnCd : 'A03';
 
-    // 💡 가이드 명세에 따른 상세 API 주소
     const url1 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getGeneralSttusDetailInfoItem02?serviceKey=${apiKey}&longTermAdminSym=${adminCd}&adminPttnCd=${pttnCd}`;
     const url2 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getInsttSttusDetailInfoItem02?serviceKey=${apiKey}&longTermAdminSym=${adminCd}&adminPttnCd=${pttnCd}`;
 
     try {
-        const [res1, res2] = await Promise.all([fetch(proxyUrl + url1), fetch(proxyUrl + url2)]);
+        // 💡 여기도 encodeURIComponent 적용
+        const [res1, res2] = await Promise.all([
+            fetch(proxyUrl + encodeURIComponent(url1)), 
+            fetch(proxyUrl + encodeURIComponent(url2))
+        ]);
         const text1 = await res1.text();
         const text2 = await res2.text();
         
@@ -279,7 +283,6 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
         const xml1 = parser.parseFromString(text1, "text/xml");
         const xml2 = parser.parseFromString(text2, "text/xml");
 
-        // 💡 [수정됨] 일반 현황 파싱 함수
         const parseGeneralInfo = (xmlDoc) => {
             const item = xmlDoc.getElementsByTagName("item")[0];
             if(!item) return "<p style='color:#94a3b8; text-align:center; padding:20px 0;'>상세 데이터가 없습니다.</p>";
@@ -306,7 +309,6 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
             return html;
         };
 
-        // 💡 [수정됨] 시설 현황 파싱 함수
         const parseFacilityInfo = (xmlDoc) => {
             const item = xmlDoc.getElementsByTagName("item")[0];
             if(!item) return "<p style='color:#94a3b8; text-align:center; padding:20px 0;'>상세 데이터가 없습니다.</p>";
