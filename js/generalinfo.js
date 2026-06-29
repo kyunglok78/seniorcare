@@ -161,7 +161,7 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
 }
 
 // ----------------------------------------------------
-// [API 호출: HTTPS + 프록시 적용 완료]
+// [API 호출: HTTPS + 프록시 적용 + NORMAL_SERVICE 예외 처리 완료]
 // ----------------------------------------------------
 function fetchFacilityData() {
     if(!mapInstance) return;
@@ -175,7 +175,6 @@ function fetchFacilityData() {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    // 반드시 https:// 로 시작해야 합니다!
     const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=200`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
@@ -189,8 +188,16 @@ function fetchFacilityData() {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(str, "text/xml");
             
+            // 💡 [수정된 부분] NORMAL_SERVICE는 에러가 아니므로 무시합니다.
             const errorNode = xmlDoc.getElementsByTagName("returnAuthMsg")[0] || xmlDoc.getElementsByTagName("errMsg")[0];
-            if(errorNode) throw new Error(errorNode.textContent);
+            if(errorNode && !errorNode.textContent.includes("NORMAL_SERVICE")) {
+                throw new Error(errorNode.textContent);
+            }
+
+            const resultCode = xmlDoc.getElementsByTagName("resultCode")[0];
+            if(resultCode && resultCode.textContent !== "00" && resultCode.textContent !== "0") {
+                 throw new Error("공공데이터 서버 에러 코드: " + resultCode.textContent);
+            }
 
             const items = xmlDoc.getElementsByTagName("item");
             if(items.length === 0) throw new Error("데이터가 없습니다.");
@@ -213,7 +220,6 @@ function fetchFacilityData() {
             loadMockFacilities(); 
         });
 }
-
 // ----------------------------------------------------
 // [상세 정보 연동: HTTPS + 프록시 적용 완료]
 // ----------------------------------------------------
