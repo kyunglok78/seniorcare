@@ -6,7 +6,6 @@ let infowindowObjects = {};
 let currentInfowindow = null;
 let globalFacilityList = [];
 
-// [안전성 강화] 컨테이너 확인 및 재시도 로직 포함
 function initMap() {
     const container = document.getElementById('kakao-map');
     if (!container) {
@@ -14,26 +13,19 @@ function initMap() {
         setTimeout(initMap, 500);
         return;
     }
-
     if(typeof kakao === 'undefined' || !kakao.maps) {
         console.error('카카오맵 API 서버와 연결되지 않았습니다.');
         return;
     }
-
     if (mapInstance) {
         mapInstance.relayout();
         return;
     }
-    
-    const options = {
-        center: new kakao.maps.LatLng(37.4665, 127.0227),
-        level: 8 
-    };
-    
+    const options = { center: new kakao.maps.LatLng(37.4665, 127.0227), level: 8 };
     mapInstance = new kakao.maps.Map(container, options);
     geocoder = new kakao.maps.services.Geocoder();
     mapInstance.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-
+    
     fetchFacilityData();
 }
 
@@ -42,76 +34,55 @@ function clearMap() {
     markers = [];
     markerObjects = {};
     infowindowObjects = {};
-    if(currentInfowindow) { 
-        currentInfowindow.close(); 
-        currentInfowindow = null; 
-    }
+    if(currentInfowindow) { currentInfowindow.close(); currentInfowindow = null; }
 }
 
-// ----------------------------------------------------
-// [검색 및 리스트 연동]
-// ----------------------------------------------------
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
-    if(!keyword) {
-        alert("검색할 기관명을 입력해주세요.");
-        return;
-    }
-    
+    if(!keyword) { alert("검색할 기관명을 입력해주세요."); return; }
     clearMap();
     let foundList = [];
-    
     globalFacilityList.forEach(fac => {
         if (fac.name.includes(keyword) || fac.addr.includes(keyword)) {
             foundList.push(fac);
             drawMarker(fac.name, fac.addr, fac.adminCd, fac.isCustom);
         }
     });
-
     updateFacilityListUI(foundList);
 }
 
 function updateFacilityListUI(list) {
     const container = document.getElementById('facility-list-container');
     const badge = document.getElementById('search-count-badge');
-    
-    badge.innerText = list.length;
+    if (badge) badge.innerText = list.length;
+    if (!container) return;
     container.innerHTML = '';
-
+    
     if (list.length === 0) {
         container.innerHTML = `<div style="padding: 30px 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">검색 결과가 없습니다.</div>`;
         return;
     }
-
     list.forEach(fac => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'facility-list-item';
         itemDiv.id = `list-item-${fac.adminCd}`;
-        
         const badgeHtml = fac.isCustom ? `<span style="background-color:#10b981; color:white; padding:2px 4px; border-radius:4px; font-size:10px; margin-left:5px;">수동추가</span>` : '';
-        
-        itemDiv.innerHTML = `
-            <div class="facility-list-name">${fac.name} ${badgeHtml}</div>
-            <div class="facility-list-addr">${fac.addr}</div>
-        `;
+        itemDiv.innerHTML = `<div class="facility-list-name">${fac.name} ${badgeHtml}</div><div class="facility-list-addr">${fac.addr}</div>`;
         
         itemDiv.onclick = () => {
             document.querySelectorAll('.facility-list-item').forEach(el => el.classList.remove('active'));
             itemDiv.classList.add('active');
-            
             showFacilityDetails(fac.adminCd, fac.name, fac.isCustom);
             
             if(markerObjects[fac.adminCd]) {
                 const position = markerObjects[fac.adminCd].getPosition();
                 mapInstance.setLevel(4);
                 mapInstance.panTo(position);
-                
                 if(currentInfowindow) currentInfowindow.close();
                 infowindowObjects[fac.adminCd].open(mapInstance, markerObjects[fac.adminCd]);
                 currentInfowindow = infowindowObjects[fac.adminCd];
             }
         };
-        
         container.appendChild(itemDiv);
     });
 }
@@ -121,10 +92,9 @@ function addCustomFacility() {
     if(!customName) return;
     const customAddr = prompt("기관의 대략적인 주소를 입력하세요 (예: 서울 강남구 테헤란로 123):");
     if(!customAddr) return;
-
+    
     const customAdminCd = "CUSTOM_" + Date.now();
     const newFac = { name: customName, addr: customAddr, adminCd: customAdminCd, isCustom: true };
-    
     globalFacilityList.push(newFac);
     drawMarker(customName, customAddr, customAdminCd, true);
     updateFacilityListUI([newFac]);
@@ -155,14 +125,12 @@ function selectFacilityForEval(name, address) {
 
 function drawMarker(name, addr, adminCd, isCustom = false) {
     if(!addr) return;
-    
     geocoder.addressSearch(addr, function(result, status) {
         if (status === kakao.maps.services.Status.OK) {
             const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
             const marker = new kakao.maps.Marker({ map: mapInstance, position: coords });
             markers.push(marker);
             markerObjects[adminCd] = marker; 
-            
             const badge = isCustom ? `<span style="background-color:#10b981; color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:5px;">수동추가</span>` : '';
             
             const content = `
@@ -173,7 +141,6 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
                     <button onclick="selectFacilityForEval('${name}', '${addr}')" style="flex: 1; padding: 8px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">📝 이 시설 평가하기</button>
                 </div>
             </div>`;
-            
             const infowindow = new kakao.maps.InfoWindow({ content: content, removable: true });
             infowindowObjects[adminCd] = infowindow;
             
@@ -181,7 +148,6 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
                 if(currentInfowindow) currentInfowindow.close();
                 infowindow.open(mapInstance, marker);
                 currentInfowindow = infowindow;
-                
                 document.querySelectorAll('.facility-list-item').forEach(el => el.classList.remove('active'));
                 const listItem = document.getElementById(`list-item-${adminCd}`);
                 if(listItem) {
@@ -195,7 +161,7 @@ function drawMarker(name, addr, adminCd, isCustom = false) {
 }
 
 // ----------------------------------------------------
-// [API 호출 및 리스트 업데이트 - 트래픽 제한 방지를 위해 200건으로 수정]
+// [API 호출: HTTPS + 프록시 적용 완료]
 // ----------------------------------------------------
 function fetchFacilityData() {
     if(!mapInstance) return;
@@ -209,7 +175,7 @@ function fetchFacilityData() {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    // numOfRows를 200으로 설정하여 일일 호출 한도 초과를 방지합니다.
+    // 반드시 https:// 로 시작해야 합니다!
     const targetUrl = `https://apis.data.go.kr/B550928/longTermCrmkinstInfoService01/getLongTermCrmkinstInfo01?serviceKey=${apiKey}&pageNo=1&numOfRows=200`;
 
     console.log("공공데이터 API에서 시설 정보를 불러오는 중입니다...");
@@ -249,24 +215,23 @@ function fetchFacilityData() {
 }
 
 // ----------------------------------------------------
-// [상세 정보 연동 및 예외 처리]
+// [상세 정보 연동: HTTPS + 프록시 적용 완료]
 // ----------------------------------------------------
 async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(!adminCd) return;
-
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
     const targetFacTable = document.getElementById('table-instt-status');
+    const btnGen = document.getElementById('btn-add-gen-row');
+    const btnFac = document.getElementById('btn-add-fac-row');
     
-    document.getElementById('btn-add-gen-row').style.display = isCustom ? 'block' : 'none';
-    document.getElementById('btn-add-fac-row').style.display = isCustom ? 'block' : 'none';
+    if (btnGen) btnGen.style.display = isCustom ? 'block' : 'none';
+    if (btnFac) btnFac.style.display = isCustom ? 'block' : 'none';
 
     if (isCustom) {
         if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.9rem; color:#10b981;">(수동 추가 - 표 내부를 클릭하여 수정)</span>`;
-        // 수동 추가 HTML (생략 없이 원본 유지)
         const editableGenHTML = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;"><tr style="border-bottom: 1px solid #cbd5e1;"><td style="padding: 10px; font-weight: bold; width: 40%; background: #f8fafc;">항목명</td><td style="padding: 10px; font-weight: bold; width: 60%; background: #f8fafc;">내용</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">설립일자</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 2020-01-01</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">입소 정원 / 현원</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 80명 / 75명</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">요양보호사 인원</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 25명</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">간호 및 의료 인력</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 간호사 1명, 간호조무사 3명</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">제공 서비스 종류</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 노인요양시설, 치매전담실</td></tr></table>`;
         const editableFacHTML = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;"><tr style="border-bottom: 1px solid #cbd5e1;"><td style="padding: 10px; font-weight: bold; width: 40%; background: #f8fafc;">항목명</td><td style="padding: 10px; font-weight: bold; width: 60%; background: #f8fafc;">내용</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">건축 연면적 (㎡)</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">직접 입력하세요</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">침실 현황</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 총 20실 (1인실 2개, 4인실 18개)</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">주요 소방시설</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 스프링클러, 자동화재탐지설비 완비</td></tr><tr style="border-bottom: 1px dashed #e2e8f0;"><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">비상 피난 설비</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">예: 피난경사로, 구조대, 완강기</td></tr></table>`;
-        
         if(targetGenTable) targetGenTable.innerHTML = editableGenHTML;
         if(targetFacTable) targetFacTable.innerHTML = editableFacHTML;
         if(targetTitle) targetTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -275,10 +240,8 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
 
     if (adminCd === 'test1' || adminCd === 'test2') {
         if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.8rem; color:#f59e0b;">(테스트용 가상 데이터 로딩완료)</span>`;
-        // 더미 데이터 HTML (생략 없이 원본 유지)
         const dummyGenHTML = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;"><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">설립일자</td><td style="padding: 10px; color: #0f172a; width: 60%;">2015-08-20</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">대표자명</td><td style="padding: 10px; color: #0f172a; width: 60%;">김대표</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">입소 정원</td><td style="padding: 10px; color: #0f172a; width: 60%;">80명</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">현재 현원</td><td style="padding: 10px; color: #0f172a; width: 60%;">76명</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">요양보호사 인원</td><td style="padding: 10px; color: #0f172a; width: 60%;">25명</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">간호/간호조무사 인원</td><td style="padding: 10px; color: #0f172a; width: 60%;">4명</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">물리치료사 인원</td><td style="padding: 10px; color: #0f172a; width: 60%;">1명</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">제공 서비스</td><td style="padding: 10px; color: #0f172a; width: 60%;">노인요양시설, 치매전담실</td></tr></table>`;
         const dummyFacHTML = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem;"><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">건축 연면적</td><td style="padding: 10px; color: #0f172a; width: 60%;">1,250㎡</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">대지 면적</td><td style="padding: 10px; color: #0f172a; width: 60%;">850㎡</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">침실 현황</td><td style="padding: 10px; color: #0f172a; width: 60%;">총 22실 (1인실 2, 2인실 4, 4인실 16)</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">화장실 / 목욕실</td><td style="padding: 10px; color: #0f172a; width: 60%;">화장실 10개, 목욕실 4개</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">식당 / 프로그램실</td><td style="padding: 10px; color: #0f172a; width: 60%;">150㎡</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">주요 소방시설</td><td style="padding: 10px; color: #0f172a; width: 60%;">스프링클러, 화재감지기, 자동화재탐지설비</td></tr><tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px; font-weight: bold; color: #475569; width: 40%; background: #f8fafc;">비상 피난 설비</td><td style="padding: 10px; color: #0f172a; width: 60%;">피난경사로, 승급식 피난기구, 구조대</td></tr></table>`;
-        
         if(targetGenTable) targetGenTable.innerHTML = dummyGenHTML;
         if(targetFacTable) targetFacTable.innerHTML = dummyFacHTML;
         if(targetTitle) targetTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -289,6 +252,7 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
     const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+    // 반드시 https:// 로 시작해야 합니다!
     const url1 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getGeneralSttusDetailInfoItem02?serviceKey=${apiKey}&adminPymntCd=${adminCd}`;
     const url2 = `https://apis.data.go.kr/B550928/getLtcInsttDetailInfoService02/getInsttSttusDetailInfoItem02?serviceKey=${apiKey}&adminPymntCd=${adminCd}`;
 
@@ -334,10 +298,7 @@ function addCustomRow(targetDivId) {
         if(tableInner) {
             const newRow = document.createElement('tr');
             newRow.style.borderBottom = '1px dashed #e2e8f0';
-            newRow.innerHTML = `
-                <td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">항목명</td>
-                <td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">내용</td>
-            `;
+            newRow.innerHTML = `<td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; border-right: 1px dashed #e2e8f0; outline:none;">항목명</td><td contenteditable="true" style="padding: 10px; background: #fffbeb; cursor:text; outline:none;">내용</td>`;
             tableInner.appendChild(newRow);
         }
     }
@@ -348,13 +309,10 @@ function loadMockFacilities() {
         { name: "KB골든라이프케어 서초빌리지", addr: "서울 서초구 우면동 604", lat: 37.4589, lng: 127.0182, adminCd: "test1", isCustom: false },
         { name: "KB골든라이프케어 위례빌리지", addr: "서울 송파구 위례광장로 290", margin: 0, lat: 37.4789, lng: 127.1428, adminCd: "test2", isCustom: false }
     ];
-
     globalFacilityList.forEach((fac, idx) => {
         drawMarker(fac.name, fac.addr, fac.adminCd, false);
     });
-    
     updateFacilityListUI(globalFacilityList);
-    
     if(globalFacilityList.length > 0) {
         const first = globalFacilityList[0];
         const coords = new kakao.maps.LatLng(first.lat, first.lng);
