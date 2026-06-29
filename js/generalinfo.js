@@ -260,7 +260,7 @@ async function showFacilityDetails(adminCd, name, isCustom = false) {
     if(targetTitle) targetTitle.innerHTML = `${name} <span style="font-size:0.8rem; color:#f59e0b;">(공공데이터 로딩중...)</span>`;
 
     const apiKey = '8badc9836e19e169b28ce280ac25e8c4c0fba9aed68e7f39ee470c5968805a21';
-    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+    const proxyUrl = "https://corsproxy.io/?";
     
     // 💡 현재 선택된 기관의 상세 파라미터 찾기
     const selectedFac = globalFacilityList.find(f => f.adminCd === adminCd);
