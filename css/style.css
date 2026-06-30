@@ -1,152 +1,371 @@
-/* 기본 스타일 및 레이아웃 */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
-body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; overflow: hidden; }
+let mapInstance = null;
+let ps = null; // 카카오 장소 검색 서비스 객체
+let infowindow = null;
+let markers = [];
+let globalFacilityList = [];
 
-.sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
-.logo { padding: 20px; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid #334155; text-align: center; }
-.menu { padding: 10px 0; flex-grow: 1; overflow-y: auto; }
-.menu-item { padding: 12px 20px; cursor: pointer; display: block; color: #cbd5e1; text-decoration: none; border-left: 4px solid transparent; }
-.menu-item:hover, .menu-item.active { background-color: #334155; color: white; border-left: 4px solid #3b82f6; }
-.menu-title { padding-left: 20px; padding-top: 15px; padding-bottom: 5px; font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
+// [1] 지도 초기화
+function initMap() {
+    const container = document.getElementById('kakao-map');
+    if (!container) {
+        setTimeout(initMap, 500);
+        return;
+    }
+    if(typeof kakao === 'undefined' || !kakao.maps || !kakao.maps.services) {
+        console.error('카카오맵 API 서버와 연결되지 않았거나 services 라이브러리가 없습니다.');
+        return;
+    }
+    
+    mapInstance = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 5 });
+    ps = new kakao.maps.services.Places(); 
+    infowindow = new kakao.maps.InfoWindow({zIndex:1});
+    mapInstance.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-.main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: hidden; }
-.header { background-color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
-.header-title { font-size: 1.2rem; font-weight: bold; color: #0f172a; }
-.user-info { display: flex; align-items: center; gap: 10px; font-weight: 500; }
-.btn-save, .btn-load { padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
-.btn-save { background-color: #3b82f6; } .btn-save:hover { background-color: #2563eb; }
-.btn-load { background-color: #0f766e; } .btn-load:hover { background-color: #047857; }
-
-.page { display: none; padding: 25px 30px; flex-direction: column; overflow-y: auto; height: 100%; }
-.page.active { display: flex; }
-
-.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; flex-shrink: 0; }
-.card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; }
-.card .value { font-size: 1.8rem; font-weight: bold; }
-.text-blue { color: #3b82f6; } .text-green { color: #10b981; } .text-red { color: #ef4444; }
-.middle-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; height: 350px; margin-bottom: 25px; flex-shrink: 0;}
-.map-container { background: #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; position: relative; }
-.ai-note { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; }
-
-.info-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 40px; flex-shrink: 0; }
-.info-item { display: flex; flex-direction: column; gap: 5px; }
-.info-label { font-size: 0.85rem; color: #64748b; }
-.info-value { font-weight: bold; font-size: 1.1rem; }
-
-.tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; flex-shrink: 0;}
-.tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: bold; color: #64748b; }
-.tab.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
-.tab-content { display: none; background: white; padding: 20px; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-grow: 1; overflow-y: auto;}
-.tab-content.active { display: block; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-th { background-color: #f8fafc; font-weight: bold; color: #475569; }
-
-/* 평가 페이지 요소 */
-.eval-section { margin-bottom: 30px; }
-.eval-section h3 { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; color: #1e293b; }
-.eval-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; border-radius: 6px; }
-.eval-item:hover { background-color: #f8fafc; }
-.eval-score select { padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1; }
-.search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-.search-bar input { flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-.search-bar button { padding: 10px 20px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
-.list-container { overflow-y: auto; height: 100%; padding-right: 10px; }
-.list-item { padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background-color 0.2s; }
-.list-item:hover { background-color: #f8fafc; }
-.list-item-title { font-weight: bold; font-size: 1.1rem; color: #0f172a; margin-bottom: 5px; }
-.list-item-desc { font-size: 0.9rem; color: #64748b; }
-.status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-.status-good { background-color: #dcfce7; color: #16a34a; }
-.status-warn { background-color: #fef3c7; color: #d97706; }
-
-/* 체크리스트 스타일 */
-.checklist-item { margin-bottom: 15px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #f8fafc; }
-.checklist-title { font-weight: bold; margin-bottom: 10px; color: #1e293b; }
-.checklist-options { display: flex; gap: 15px; }
-.checklist-options label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
-
-/* 차트 컨테이너 (결과분석) */
-.chart-section { display: flex; flex-direction: column; gap: 25px; margin-bottom: 35px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.chart-row-top { display: flex; justify-content: center; align-items: center; border-bottom: 2px dashed #e2e8f0; padding-bottom: 25px; }
-.chart-container-main { width: 450px; height: 350px; }
-.chart-grid-bottom { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-.chart-container-sub { height: 280px; width: 100%; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; }
-
-/* 모달 스타일 */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.modal-title { font-size: 1.2rem; font-weight: bold; }
-.btn-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #475569; }
-.form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; }
-.btn-submit { width: 100%; padding: 12px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
-#kakao-map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-radius: 10px; z-index: 1;}
-
-.facility-list-item { padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background-color 0.2s; }
-.facility-list-item:hover { background-color: #f1f5f9; }
-.facility-list-item.active { background-color: #e0f2fe; border-left: 4px solid #3b82f6; }
-.facility-list-name { font-weight: bold; font-size: 1.05rem; color: #0f172a; margin-bottom: 5px; }
-.facility-list-addr { font-size: 0.85rem; color: #64748b; }
-
-/* 보고서 페이지 스타일 */
-.report-wrapper { background: #cbd5e1; padding: 20px; overflow-y: auto; display: flex; justify-content: center; height: calc(100vh - 120px); border-radius: 8px; }
-.report-container { width: 21cm; min-height: 29.7cm; padding: 2cm; background: white; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-family: 'Malgun Gothic', 'Pretendard', sans-serif; color: #000; position: relative; }
-.report-header { text-align: center; margin-bottom: 2cm; border-bottom: 2px solid #000; padding-bottom: 20px; }
-.report-header h1 { font-size: 24pt; letter-spacing: 2px; margin-bottom: 10px; color: #000; }
-.report-header .sub-title { font-size: 14pt; color: #333; }
-.report-meta { display: flex; justify-content: flex-end; gap: 20px; margin-bottom: 1cm; font-size: 11pt; }
-.report-section { margin-bottom: 1.5cm; }
-.report-section h2 { font-size: 16pt; border-left: 5px solid #2563eb; padding-left: 10px; margin-bottom: 15px; color: #000; }
-.report-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 15px; }
-.report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: middle; }
-.report-table th { background-color: #f1f5f9; text-align: center; font-weight: bold; color: #000; }
-
-@media print {
-    @page { size: A4; margin: 20mm; }
-    body * { visibility: hidden; }
-    #page-report, #page-report * { visibility: visible; }
-    #page-report { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-    .report-wrapper { background: none; padding: 0; overflow: visible; display: block; height: auto; box-shadow: none; border-radius: 0; }
-    .report-container { width: 100%; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
-    .info-panel, .btn-save, .sidebar, .header, .btn-print-top { display: none !important; }
+    renderOverviewForm("", "");
 }
 
-.btn-top-action {
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-.btn-top-action:hover {
-    filter: brightness(0.95);
-    transform: translateY(-1px);
+// [2] 카카오 키워드 장소 검색 실행
+function searchFacility() {
+    const keyword = document.getElementById('search-facility-input').value.trim();
+    if(!keyword) { 
+        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
+        return; 
+    }
+    ps.keywordSearch(keyword, placesSearchCB);
 }
 
-/* ========================================================= */
-/* 💡 [강력 패치] 하단 일반 현황 폼 영역 100% 와이드 확장 제어 */
-/* ========================================================= */
-
-#table-general-status {
-    width: 100% !important;
-    max-width: 100% !important;
-    display: block !important;
+function placesSearchCB(data, status, pagination) {
+    if (status === kakao.maps.services.Status.OK) {
+        displayPlaces(data);
+    } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+        alert('검색 결과가 존재하지 않습니다. 주소를 다시 확인해주세요.');
+        updateFacilityListUI([]);
+    } else if (status === kakao.maps.services.Status.ERROR) {
+        alert('검색 중 오류가 발생했습니다.');
+    }
 }
 
-/* 폼을 감싸서 절반 크기로 누르고 있는 상위 <div> 컨테이너들의 폭을 전부 해제 */
-div:has(> #table-general-status),
-div:has(> div > #table-general-status) {
-    width: 100% !important;
-    max-width: 100% !important;
-    display: block !important; 
-    flex: none !important;
+function displayPlaces(places) {
+    clearMap();
+    globalFacilityList = places;
+    const bounds = new kakao.maps.LatLngBounds();
+
+    for (let i = 0; i < places.length; i++) {
+        const placePosition = new kakao.maps.LatLng(places[i].y, places[i].x);
+        const marker = new kakao.maps.Marker({ position: placePosition, map: mapInstance });
+        markers.push(marker);
+        
+        const title = places[i].place_name;
+        const address = places[i].road_address_name || places[i].address_name;
+
+        kakao.maps.event.addListener(marker, 'click', function() {
+            infowindow.setContent(`<div style="padding:5px;font-size:12px;">${title}</div>`);
+            infowindow.open(mapInstance, marker);
+            renderOverviewForm(title, address);
+            
+            document.querySelectorAll('.facility-list-item').forEach(el => el.classList.remove('active'));
+            const listItem = document.getElementById(`list-item-${i}`);
+            if(listItem) listItem.classList.add('active');
+        });
+
+        bounds.extend(placePosition);
+    }
+    mapInstance.setBounds(bounds);
+    updateFacilityListUI(places);
 }
+
+function clearMap() {
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    if(infowindow) infowindow.close();
+}
+
+function updateFacilityListUI(places) {
+    const container = document.getElementById('facility-list-container');
+    const badge = document.getElementById('search-count-badge');
+    if(badge) badge.innerText = places.length;
+    if(!container) return;
+    
+    container.innerHTML = '';
+    if (places.length === 0) {
+        container.innerHTML = `<div style="padding: 30px 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">검색 결과가 없습니다.</div>`;
+        return;
+    }
+
+    places.forEach((place, i) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'facility-list-item';
+        itemDiv.id = `list-item-${i}`;
+        
+        const address = place.road_address_name || place.address_name;
+        itemDiv.innerHTML = `<div class="facility-list-name">${place.place_name}</div><div class="facility-list-addr">${address}</div>`;
+        
+        itemDiv.onclick = () => {
+            document.querySelectorAll('.facility-list-item').forEach(el => el.classList.remove('active'));
+            itemDiv.classList.add('active');
+            
+            const pos = new kakao.maps.LatLng(place.y, place.x);
+            mapInstance.panTo(pos);
+            infowindow.setContent(`<div style="padding:5px;font-size:12px;">${place.place_name}</div>`);
+            infowindow.open(mapInstance, markers[i]);
+            
+            renderOverviewForm(place.place_name, address);
+        };
+        container.appendChild(itemDiv);
+    });
+}
+
+function addCustomFacility() {
+    const customName = prompt("사업장(시설)의 이름을 입력하세요:", "OOO 요양원");
+    if(!customName) return;
+    const customAddr = prompt("기관의 대략적인 주소를 입력하세요:");
+    renderOverviewForm(customName, customAddr || "");
+}
+
+// 💡 [핵심] 좌우 2단 분할 및 음수(-) 입력 방지 로직 적용, 하단 저장버튼 제거
+function renderOverviewForm(name, address) {
+    const targetTitle = document.getElementById('current-info-facility-name');
+    const targetGenTable = document.getElementById('table-general-status');
+    const targetFacTable = document.getElementById('table-instt-status');
+    
+    const btnGen = document.getElementById('btn-add-gen-row');
+    const btnFac = document.getElementById('btn-add-fac-row');
+    if(btnGen) btnGen.style.display = 'none';
+    if(btnFac) btnFac.style.display = 'none';
+    
+    if(targetTitle) {
+        targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
+    }
+
+    // min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" 속성을 통해 음수를 차단합니다.
+    const numInputFilter = `min="0" oninput="if(this.value < 0) this.value = 0;"`;
+
+    const formHTML = `
+        <div style="display: flex; gap: 40px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
+            
+            <div style="flex: 1; padding-right: 10px;">
+                <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #2563eb; padding-left:10px; font-size:16px;">1. 기본 정보</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
+                    <tbody>
+                        <tr>
+                            <th style="width:25%; background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">사업장명</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-name" value="${name}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">대표자명</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-ceo" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">소재지</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-addr" value="${address}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">연락처</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-contact" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 02-123-4567">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">업종</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-industry" value="보건업 및 사회복지 서비스업" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">시설관리자</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-manager" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="성명 및 연락처 기입">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">주요 사업<br>(생산품)</th>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <textarea id="frm-service" rows="11" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px; resize:vertical;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="flex: 1;">
+                <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #10b981; padding-left:10px; font-size:16px;">2. 시설 및 규모 상세</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left; border-top: 2px solid #1e293b;">
+                    <tbody>
+                        <tr>
+                            <th style="width:18%; background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="5">규모/구조</th>
+                            <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
+                                건축면적 <input type="number" id="frm-area-build" ${numInputFilter} step="0.01" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
+                            </td>
+                            <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
+                                연면적 <input type="number" id="frm-area-tot" ${numInputFilter} step="0.01" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                용도: <input type="text" id="frm-usage" style="width:100px; border:none; border-bottom:1px solid #94a3b8; outline:none;" value="노인복지시설">
+                            </td>
+                            <td style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                소방안전관리대상: <input type="number" id="frm-fire-class" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 급
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                건축동수 <input type="number" id="frm-bld-cnt" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개동 
+                                <span style="color:#64748b; margin-left:10px;">(지상 <input type="number" id="frm-flr-g" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층 / 지하 <input type="number" id="frm-flr-u" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                건물구조: <input type="text" id="frm-structure" style="width:250px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="예: 철근콘크리트조/슬래브">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                피난계단 <input type="number" id="frm-stair" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개소 
+                                &nbsp;&nbsp;|&nbsp;&nbsp; 승강기 <input type="number" id="frm-elev" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 대 
+                                &nbsp;&nbsp;|&nbsp;&nbsp; 주차장: <input type="text" id="frm-park" style="width:120px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="기계식 및 옥외">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th style="background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="3">인원현황</th>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                거주인원 총 <input type="number" id="frm-res-tot" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 1인실: <input type="number" id="frm-res-1" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 2인실: <input type="number" id="frm-res-2" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                근무인원 <input type="number" id="frm-emp-tot" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 주간 <input type="number" id="frm-emp-d" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 야간 <input type="number" id="frm-emp-n" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                고령자 <input type="number" id="frm-vul-old" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 영유아 <input type="number" id="frm-vul-chi" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 장애인 <input type="number" id="frm-vul-dis" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th style="background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;">화재보험가입</th>
+                            <td colspan="2" style="padding:0; border:1px solid #cbd5e1;">
+                                <table style="width:100%; border-collapse:collapse; text-align:center;">
+                                    <tr style="background:#f8fafc; border-bottom:1px solid #cbd5e1;">
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">가입기간</th>
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">보험사명</th>
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">가입대상</th>
+                                        <th style="padding:6px; font-weight:normal;">가입금액</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;" rowspan="2">
+                                            <input type="date" id="frm-ins-start" style="width:100px; padding:2px; font-size:11px;"><br>~<br><input type="date" id="frm-ins-end" style="width:100px; padding:2px; font-size:11px;">
+                                        </td>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;" rowspan="2">
+                                            <input type="text" id="frm-ins-comp" style="width:80px; padding:4px; text-align:center;" placeholder="한화 손해보험">
+                                        </td>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대인</td>
+                                        <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
+                                            <input type="number" id="frm-ins-p" ${numInputFilter} style="width:60px; padding:4px; text-align:right;"> 천만원
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대물</td>
+                                        <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
+                                            <input type="number" id="frm-ins-m" ${numInputFilter} style="width:60px; padding:4px; text-align:right;"> 천만원
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    if(targetGenTable && targetFacTable) {
+        targetGenTable.innerHTML = formHTML;
+        
+        let rightEl = targetFacTable;
+        while(rightEl && rightEl.parentElement) {
+            rightEl.style.display = 'none';
+            if (rightEl.parentElement.contains(targetGenTable)) break; 
+            rightEl = rightEl.parentElement;
+        }
+
+        let leftEl = targetGenTable;
+        while(leftEl && leftEl.parentElement) {
+            leftEl.style.width = '100%';
+            leftEl.style.maxWidth = '100%';
+            leftEl.style.flex = '0 0 100%';
+            
+            if (leftEl.parentElement.contains(targetFacTable)) {
+                leftEl.parentElement.style.display = 'block'; 
+                break;
+            }
+            leftEl = leftEl.parentElement;
+        }
+    }
+}
+
+// 💡 [핵심 통합] 우측 상단의 공통 '저장' 버튼을 위한 전역 함수
+// 나중에 index.html에서 빨간색 [위험성평가 결과 임시저장] 버튼을 누르면 이 함수도 같이 실행되게 연동할 예정입니다.
+function saveOverviewData() {
+    const name = document.getElementById('frm-name')?.value;
+    if(!name) { 
+        // 탭이 달라서 폼이 없는 경우 에러 방지
+        return null; 
+    }
+    
+    const overviewData = {
+        name: name,
+        ceo: document.getElementById('frm-ceo')?.value,
+        address: document.getElementById('frm-addr')?.value,
+        contact: document.getElementById('frm-contact')?.value,
+        industry: document.getElementById('frm-industry')?.value,
+        manager: document.getElementById('frm-manager')?.value,
+        service: document.getElementById('frm-service')?.value,
+        
+        areaBuild: document.getElementById('frm-area-build')?.value,
+        areaTot: document.getElementById('frm-area-tot')?.value,
+        usage: document.getElementById('frm-usage')?.value,
+        fireClass: document.getElementById('frm-fire-class')?.value,
+        bldCnt: document.getElementById('frm-bld-cnt')?.value,
+        flrG: document.getElementById('frm-flr-g')?.value,
+        flrU: document.getElementById('frm-flr-u')?.value,
+        structure: document.getElementById('frm-structure')?.value,
+        stair: document.getElementById('frm-stair')?.value,
+        elev: document.getElementById('frm-elev')?.value,
+        park: document.getElementById('frm-park')?.value,
+        
+        resTot: document.getElementById('frm-res-tot')?.value,
+        res1: document.getElementById('frm-res-1')?.value,
+        res2: document.getElementById('frm-res-2')?.value,
+        empTot: document.getElementById('frm-emp-tot')?.value,
+        empD: document.getElementById('frm-emp-d')?.value,
+        empN: document.getElementById('frm-emp-n')?.value,
+        vulOld: document.getElementById('frm-vul-old')?.value,
+        vulChi: document.getElementById('frm-vul-chi')?.value,
+        vulDis: document.getElementById('frm-vul-dis')?.value,
+        
+        insStart: document.getElementById('frm-ins-start')?.value,
+        insEnd: document.getElementById('frm-ins-end')?.value,
+        insComp: document.getElementById('frm-ins-comp')?.value,
+        insP: document.getElementById('frm-ins-p')?.value,
+        insM: document.getElementById('frm-ins-m')?.value
+    };
+    
+    localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
+    return overviewData;
+}
+
+function fetchFacilityData() {} 
+function loadMockFacilities() {}
