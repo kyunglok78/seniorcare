@@ -1,10 +1,9 @@
 let mapInstance = null;
-let ps = null; // 카카오 장소 검색 서비스 객체
+let ps = null;
 let infowindow = null;
 let markers = [];
 let globalFacilityList = [];
 
-// [1] 지도 초기화
 function initMap() {
     const container = document.getElementById('kakao-map');
     if (!container) {
@@ -15,7 +14,6 @@ function initMap() {
         console.error('카카오맵 API 서버와 연결되지 않았거나 services 라이브러리가 없습니다.');
         return;
     }
-    
     mapInstance = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 5 });
     ps = new kakao.maps.services.Places(); 
     infowindow = new kakao.maps.InfoWindow({zIndex:1});
@@ -24,11 +22,10 @@ function initMap() {
     renderOverviewForm("", "");
 }
 
-// [2] 카카오 키워드 장소 검색 실행
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
     if(!keyword) { 
-        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
+        alert("주소 또는 지역명(기관명)을 입력해주세요."); 
         return; 
     }
     ps.keywordSearch(keyword, placesSearchCB);
@@ -38,7 +35,7 @@ function placesSearchCB(data, status, pagination) {
     if (status === kakao.maps.services.Status.OK) {
         displayPlaces(data);
     } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
-        alert('검색 결과가 존재하지 않습니다. 주소를 다시 확인해주세요.');
+        alert('검색 결과가 존재하지 않습니다.');
         updateFacilityListUI([]);
     } else if (status === kakao.maps.services.Status.ERROR) {
         alert('검색 중 오류가 발생했습니다.');
@@ -122,7 +119,7 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 좌우 50:50 분할 구조 및 이미지 양식 100% 매칭
+// 💡 [핵심] 좌우 2단 분할 레이아웃이 적용된 렌더링 함수
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
@@ -137,7 +134,6 @@ function renderOverviewForm(name, address) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
 
-    // display: flex; 를 활용해 좌측 50%, 우측 50%로 화면 꽉 차게 분할
     const formHTML = `
         <div style="display: flex; gap: 20px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
             
@@ -251,7 +247,6 @@ function renderOverviewForm(name, address) {
                     </tbody>
                 </table>
             </div>
-
         </div>
 
         <div style="text-align:right; margin-top:25px; width:100%;">
@@ -265,7 +260,6 @@ function renderOverviewForm(name, address) {
         targetGenTable.innerHTML = formHTML;
     }
     
-    // 빈 박스 숨김
     if(targetFacTable) {
         targetFacTable.innerHTML = "";
         targetFacTable.style.display = 'none';
@@ -273,7 +267,6 @@ function renderOverviewForm(name, address) {
         if(parentPanel) parentPanel.style.display = 'none';
     }
     
-    // 인원 합계 자동계산 이벤트 연결
     setTimeout(() => {
         const calcSum = (mId, fId, totId) => {
             const m = parseInt(document.getElementById(mId).value) || 0;
@@ -293,7 +286,6 @@ function renderOverviewForm(name, address) {
     }, 100);
 }
 
-// [5] 보고서 연동용 데이터 저장 함수
 function saveOverviewData() {
     const name = document.getElementById('overview-name')?.value;
     if(!name) { alert("사업장명을 입력해주세요."); return; }
