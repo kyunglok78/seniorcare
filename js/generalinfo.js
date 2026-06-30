@@ -232,8 +232,22 @@ function renderOverviewForm(name, address) {
         </div>
     `;
 
-    if(targetGenTable) targetGenTable.innerHTML = formHTML;
-    if(targetFacTable) targetFacTable.innerHTML = ""; // 하단 표 통합
+    // 위쪽 영역에 폼을 넣습니다.
+    if(targetGenTable) {
+        targetGenTable.innerHTML = formHTML;
+    }
+    
+    // 💡 [핵심 해결] 아래쪽 빈 껍데기 박스를 통째로 숨깁니다.
+    if(targetFacTable) {
+        targetFacTable.innerHTML = "";
+        targetFacTable.style.display = 'none';
+        
+        // 상위를 감싸고 있는 패널(div)까지 찾아내어 완전히 보이지 않게 만듭니다.
+        const parentPanel = targetFacTable.parentElement;
+        if(parentPanel) {
+            parentPanel.style.display = 'none';
+        }
+    }
     
     setTimeout(() => {
         const mInput = document.getElementById('overview-emp-m');
