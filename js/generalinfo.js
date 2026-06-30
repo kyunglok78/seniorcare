@@ -122,13 +122,12 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 보고서 양식에 맞춘 100% 폭 와이드 분할 폼
+// 💡 [핵심] 좌우 50:50 분할 구조 및 이미지 양식 100% 매칭
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
     const targetFacTable = document.getElementById('table-instt-status');
     
-    // 불필요한 기존 버튼들 숨김
     const btnGen = document.getElementById('btn-add-gen-row');
     const btnFac = document.getElementById('btn-add-fac-row');
     if(btnGen) btnGen.style.display = 'none';
@@ -138,109 +137,127 @@ function renderOverviewForm(name, address) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
 
-    // 화면 꽉 차게 가로 폭을 100%로 늘리고, 표를 2개로 분할
+    // display: flex; 를 활용해 좌측 50%, 우측 50%로 화면 꽉 차게 분할
     const formHTML = `
-        <div style="background: #fff; padding: 25px; border-radius: 8px; font-family: 'Pretendard', sans-serif; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; gap: 20px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
             
-            <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #2563eb; padding-left:10px; font-size:16px;">1. 기본 정보</h3>
-            <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border-top: 2px solid #1e293b; margin-bottom: 30px;">
-                <tbody>
-                    <tr>
-                        <th style="width:15%; background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">사업장명</th>
-                        <td style="width:35%; padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-name" value="${name}" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        </td>
-                        <th style="width:15%; background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">대표자명</th>
-                        <td style="width:35%; padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-ceo" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">소재지</th>
-                        <td style="padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-address" value="${address}" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        </td>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">연락처</th>
-                        <td style="padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-contact" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 02-123-4567">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">업종</th>
-                        <td style="padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-industry" value="보건업 및 사회복지 서비스업" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        </td>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">시설관리자</th>
-                        <td style="padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-manager" style="width:95%; padding:8px; border:1px solid #ccc; border-radius:4px;" placeholder="시설관리자 성명">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #10b981; padding-left:10px; font-size:16px;">2. 시설 및 규모 상세</h3>
-            <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left; border-top: 2px solid #1e293b;">
-                <tbody>
-                    <tr>
-                        <th style="width:15%; background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">규모 및 건축구조</th>
-                        <td colspan="3" style="padding:10px; border:1px solid #cbd5e1;">
-                            <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
-                                <div><span style="color:#64748b;">대지면적:</span> <input type="number" id="overview-area-land" style="width:80px; padding:6px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
-                                <div><span style="color:#64748b;">연면적:</span> <input type="number" id="overview-area-total" style="width:80px; padding:6px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
-                                <div><span style="color:#64748b;">층수:</span> 지하 <input type="number" id="overview-floor-under" style="width:50px; padding:6px; border:1px solid #ccc; border-radius:4px;"> 층 / 지상 <input type="number" id="overview-floor-ground" style="width:50px; padding:6px; border:1px solid #ccc; border-radius:4px;"> 층</div>
-                                <div><span style="color:#64748b;">구조:</span> <input type="text" id="overview-structure" style="width:160px; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 철근콘크리트조"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;" rowspan="2">인원현황</th>
-                        <td colspan="3" style="padding:10px; border:1px solid #cbd5e1;">
-                            <div style="display:flex; gap:15px; align-items:center;">
-                                <span style="font-weight:bold; width:70px; background:#e2e8f0; text-align:center; padding:4px; border-radius:4px;">종사자</span>
-                                <span>남:</span> <input type="number" id="overview-emp-m" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"> 명
-                                <span style="margin-left:15px;">여:</span> <input type="number" id="overview-emp-f" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"> 명
-                                <span style="margin-left:20px; font-weight:bold; color:#1e293b;">종사자 계: <span id="overview-emp-total" style="color:#2563eb; font-size:16px;">0</span> 명</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" style="padding:10px; border:1px solid #cbd5e1;">
-                            <div style="display:flex; gap:15px; align-items:center;">
-                                <span style="font-weight:bold; width:70px; background:#e2e8f0; text-align:center; padding:4px; border-radius:4px;">이용자</span>
-                                <span>남:</span> <input type="number" id="overview-user-m" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"> 명
-                                <span style="margin-left:15px;">여:</span> <input type="number" id="overview-user-f" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"> 명
-                                <span style="margin-left:20px; font-weight:bold; color:#1e293b;">이용자 계: <span id="overview-user-total" style="color:#2563eb; font-size:16px;">0</span> 명</span>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">화재보험 가입 내역</th>
-                        <td colspan="3" style="padding:10px; border:1px solid #cbd5e1;">
-                            <div style="display:flex; gap:20px; align-items:center;">
-                                <label><input type="radio" name="overview-insurance-yn" value="O" checked> 가입(O)</label>
-                                <label><input type="radio" name="overview-insurance-yn" value="X"> 미가입(X)</label>
-                                <span style="border-left:1px solid #ccc; height:15px;"></span>
-                                <div><span style="color:#64748b;">보험사명:</span> <input type="text" id="overview-insurance-company" style="width:150px; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
-                                <div><span style="color:#64748b;">보험기간:</span> <input type="text" id="overview-insurance-date" style="width:220px; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 2026.01.01 ~ 2027.01.01"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1;">주요 사업 (생산품)</th>
-                        <td colspan="3" style="padding:10px; border:1px solid #cbd5e1;">
-                            <textarea id="overview-service" rows="2" style="width:98%; padding:8px; border:1px solid #ccc; border-radius:4px; resize:vertical; font-family:inherit;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div style="text-align:right; margin-top:25px;">
-                <button onclick="saveOverviewData()" style="background:#2563eb; color:white; border:none; padding:14px 28px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:15px; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
-                    💾 입력 정보 저장 및 보고서 데이터 연동 준비
-                </button>
+            <div style="flex: 1; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #2563eb; padding-left:10px; font-size:16px;">1. 기본 정보</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
+                    <tbody>
+                        <tr>
+                            <th style="width:25%; background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">사업장명</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-name" value="${name}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">대표자명</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-ceo" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">소재지</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-address" value="${address}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">연락처</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-contact" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 02-123-4567">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">업종</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-industry" value="보건업 및 사회복지 서비스업" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">시설관리자</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-manager" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="성명 입력">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">주요 사업<br>(생산품)</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <textarea id="overview-service" rows="3" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px; resize:vertical;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+
+            <div style="flex: 1; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #10b981; padding-left:10px; font-size:16px;">2. 시설 및 규모 상세</h3>
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
+                    <tbody>
+                        <tr>
+                            <th style="width:25%; background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">규모</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <div style="display:flex; flex-wrap:wrap; gap:10px; line-height: 1.8;">
+                                    <div><span style="color:#64748b;">대지면적:</span> <input type="number" id="overview-area-land" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
+                                    <div><span style="color:#64748b;">연면적:</span> <input type="number" id="overview-area-total" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
+                                    <div><span style="color:#64748b;">층수:</span> 지하 <input type="number" id="overview-floor-under" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층 / 지상 <input type="number" id="overview-floor-ground" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">건축구조</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <input type="text" id="overview-structure" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 철근콘크리트조">
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;" rowspan="2">인원현황</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-weight:bold; background:#e2e8f0; padding:4px; border-radius:4px; width:55px; text-align:center;">종사자</span>
+                                    <span>남 <input type="number" id="overview-emp-m" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
+                                    <span>여 <input type="number" id="overview-emp-f" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
+                                    <span style="margin-left:auto; font-weight:bold;">계 <span id="overview-emp-total" style="color:#2563eb; font-size:15px; margin:0 5px;">0</span>명</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-weight:bold; background:#e2e8f0; padding:4px; border-radius:4px; width:55px; text-align:center;">이용자</span>
+                                    <span>남 <input type="number" id="overview-user-m" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
+                                    <span>여 <input type="number" id="overview-user-f" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
+                                    <span style="margin-left:auto; font-weight:bold;">계 <span id="overview-user-total" style="color:#2563eb; font-size:15px; margin:0 5px;">0</span>명</span>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">화재보험<br>가입 내역</th>
+                            <td style="padding:10px; border:1px solid #cbd5e1;">
+                                <div style="margin-bottom:10px;">
+                                    <span style="color:#64748b; margin-right:15px; font-weight:bold;">가입 유무:</span>
+                                    <label style="margin-right:15px;"><input type="radio" name="overview-insurance-yn" value="O" checked> 가입(O)</label>
+                                    <label><input type="radio" name="overview-insurance-yn" value="X"> 미가입(X)</label>
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                                    <div><span style="color:#64748b; font-weight:bold;">보험사명:</span> <input type="text" id="overview-insurance-company" style="width:120px; padding:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <div style="width:100%;"><span style="color:#64748b; font-weight:bold;">보험기간:</span> <input type="text" id="overview-insurance-date" style="width:85%; padding:4px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 2026.01.01 ~ 2027.01.01"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div style="text-align:right; margin-top:25px; width:100%;">
+            <button onclick="saveOverviewData()" style="background:#2563eb; color:white; border:none; padding:14px 30px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:15px; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
+                💾 입력 정보 저장 및 보고서 데이터 연동 준비
+            </button>
         </div>
     `;
 
@@ -248,6 +265,7 @@ function renderOverviewForm(name, address) {
         targetGenTable.innerHTML = formHTML;
     }
     
+    // 빈 박스 숨김
     if(targetFacTable) {
         targetFacTable.innerHTML = "";
         targetFacTable.style.display = 'none';
@@ -255,7 +273,7 @@ function renderOverviewForm(name, address) {
         if(parentPanel) parentPanel.style.display = 'none';
     }
     
-    // 인원 합계 자동계산 로직 (종사자 & 이용자 분리)
+    // 인원 합계 자동계산 이벤트 연결
     setTimeout(() => {
         const calcSum = (mId, fId, totId) => {
             const m = parseInt(document.getElementById(mId).value) || 0;
@@ -286,17 +304,16 @@ function saveOverviewData() {
         name: name,
         ceo: document.getElementById('overview-ceo')?.value,
         address: document.getElementById('overview-address')?.value,
-        contact: document.getElementById('overview-contact')?.value, // 추가됨
+        contact: document.getElementById('overview-contact')?.value,
         industry: document.getElementById('overview-industry')?.value,
-        manager: document.getElementById('overview-manager')?.value, // 추가됨
+        manager: document.getElementById('overview-manager')?.value,
         
-        // 인원 (종사자/이용자 분리)
         empM: document.getElementById('overview-emp-m')?.value,
         empF: document.getElementById('overview-emp-f')?.value,
         empTotal: document.getElementById('overview-emp-total')?.innerText,
-        userM: document.getElementById('overview-user-m')?.value, // 추가됨
-        userF: document.getElementById('overview-user-f')?.value, // 추가됨
-        userTotal: document.getElementById('overview-user-total')?.innerText, // 추가됨
+        userM: document.getElementById('overview-user-m')?.value,
+        userF: document.getElementById('overview-user-f')?.value,
+        userTotal: document.getElementById('overview-user-total')?.innerText,
         
         areaLand: document.getElementById('overview-area-land')?.value,
         areaTotal: document.getElementById('overview-area-total')?.value,
@@ -304,9 +321,9 @@ function saveOverviewData() {
         floorGround: document.getElementById('overview-floor-ground')?.value,
         structure: document.getElementById('overview-structure')?.value,
         
-        insuranceYn: insYnNode ? insYnNode.value : 'X', // O 또는 X
+        insuranceYn: insYnNode ? insYnNode.value : 'X',
         insuranceCompany: document.getElementById('overview-insurance-company')?.value,
-        insuranceDate: document.getElementById('overview-insurance-date')?.value, // 텍스트로 변경
+        insuranceDate: document.getElementById('overview-insurance-date')?.value,
         service: document.getElementById('overview-service')?.value
     };
     
