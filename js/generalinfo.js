@@ -1,9 +1,10 @@
 let mapInstance = null;
-let ps = null;
+let ps = null; // 카카오 장소 검색 서비스 객체
 let infowindow = null;
 let markers = [];
 let globalFacilityList = [];
 
+// [1] 지도 초기화
 function initMap() {
     const container = document.getElementById('kakao-map');
     if (!container) {
@@ -14,6 +15,7 @@ function initMap() {
         console.error('카카오맵 API 서버와 연결되지 않았거나 services 라이브러리가 없습니다.');
         return;
     }
+    
     mapInstance = new kakao.maps.Map(container, { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 5 });
     ps = new kakao.maps.services.Places(); 
     infowindow = new kakao.maps.InfoWindow({zIndex:1});
@@ -22,10 +24,11 @@ function initMap() {
     renderOverviewForm("", "");
 }
 
+// [2] 카카오 키워드 장소 검색 실행
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
     if(!keyword) { 
-        alert("주소 또는 지역명(기관명)을 입력해주세요."); 
+        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
         return; 
     }
     ps.keywordSearch(keyword, placesSearchCB);
@@ -35,7 +38,7 @@ function placesSearchCB(data, status, pagination) {
     if (status === kakao.maps.services.Status.OK) {
         displayPlaces(data);
     } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
-        alert('검색 결과가 존재하지 않습니다.');
+        alert('검색 결과가 존재하지 않습니다. 주소를 다시 확인해주세요.');
         updateFacilityListUI([]);
     } else if (status === kakao.maps.services.Status.ERROR) {
         alert('검색 중 오류가 발생했습니다.');
@@ -119,7 +122,7 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 좌우 2단 분할 레이아웃이 적용된 렌더링 함수
+// 💡 [핵심] 좌우 2단 분할 및 이미지 양식(표) 100% 매칭
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
@@ -134,6 +137,7 @@ function renderOverviewForm(name, address) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
 
+    // 좌우 50:50 레이아웃 시작
     const formHTML = `
         <div style="display: flex; gap: 20px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
             
@@ -143,44 +147,44 @@ function renderOverviewForm(name, address) {
                     <tbody>
                         <tr>
                             <th style="width:25%; background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">사업장명</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-name" value="${name}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-name" value="${name}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">대표자명</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-ceo" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-ceo" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">소재지</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-address" value="${address}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-addr" value="${address}" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">연락처</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-contact" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 02-123-4567">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-contact" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 02-123-4567">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">업종</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-industry" value="보건업 및 사회복지 서비스업" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-industry" value="보건업 및 사회복지 서비스업" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">시설관리자</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-manager" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="성명 입력">
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <input type="text" id="frm-manager" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="성명 및 연락처 기입">
                             </td>
                         </tr>
                         <tr>
                             <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">주요 사업<br>(생산품)</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <textarea id="overview-service" rows="3" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px; resize:vertical;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
+                            <td style="padding:8px; border:1px solid #cbd5e1;">
+                                <textarea id="frm-service" rows="11" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px; resize:vertical;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
                             </td>
                         </tr>
                     </tbody>
@@ -189,59 +193,94 @@ function renderOverviewForm(name, address) {
 
             <div style="flex: 1; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #10b981; padding-left:10px; font-size:16px;">2. 시설 및 규모 상세</h3>
-                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left; border-top: 2px solid #1e293b;">
                     <tbody>
                         <tr>
-                            <th style="width:25%; background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">규모</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <div style="display:flex; flex-wrap:wrap; gap:10px; line-height: 1.8;">
-                                    <div><span style="color:#64748b;">대지면적:</span> <input type="number" id="overview-area-land" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
-                                    <div><span style="color:#64748b;">연면적:</span> <input type="number" id="overview-area-total" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
-                                    <div><span style="color:#64748b;">층수:</span> 지하 <input type="number" id="overview-floor-under" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층 / 지상 <input type="number" id="overview-floor-ground" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층</div>
-                                </div>
+                            <th style="width:18%; background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="5">규모/구조</th>
+                            <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
+                                건축면적 <input type="text" id="frm-area-build" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
+                            </td>
+                            <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
+                                연면적 <input type="text" id="frm-area-tot" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
                             </td>
                         </tr>
                         <tr>
-                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">건축구조</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <input type="text" id="overview-structure" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 철근콘크리트조">
+                            <td style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                용도: <input type="text" id="frm-usage" style="width:100px; border:none; border-bottom:1px solid #94a3b8; outline:none;" value="노인복지시설">
                             </td>
-                        </tr>
-                        
-                        <tr>
-                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;" rowspan="2">인원현황</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-weight:bold; background:#e2e8f0; padding:4px; border-radius:4px; width:55px; text-align:center;">종사자</span>
-                                    <span>남 <input type="number" id="overview-emp-m" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
-                                    <span>여 <input type="number" id="overview-emp-f" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
-                                    <span style="margin-left:auto; font-weight:bold;">계 <span id="overview-emp-total" style="color:#2563eb; font-size:15px; margin:0 5px;">0</span>명</span>
-                                </div>
+                            <td style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                소방안전관리대상: <input type="text" id="frm-fire-class" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none;"> 급
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span style="font-weight:bold; background:#e2e8f0; padding:4px; border-radius:4px; width:55px; text-align:center;">이용자</span>
-                                    <span>남 <input type="number" id="overview-user-m" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
-                                    <span>여 <input type="number" id="overview-user-f" style="width:45px; padding:4px; border:1px solid #ccc; border-radius:4px; text-align:right;" value="0" min="0"></span>
-                                    <span style="margin-left:auto; font-weight:bold;">계 <span id="overview-user-total" style="color:#2563eb; font-size:15px; margin:0 5px;">0</span>명</span>
-                                </div>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                건축동수 <input type="number" id="frm-bld-cnt" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개동 
+                                <span style="color:#64748b; margin-left:10px;">(지상 <input type="number" id="frm-flr-g" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층 / 지하 <input type="number" id="frm-flr-u" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                건물구조: <input type="text" id="frm-structure" style="width:250px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="예: 철근콘크리트조/슬래브">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                피난계단 <input type="number" id="frm-stair" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개소 
+                                &nbsp;&nbsp;|&nbsp;&nbsp; 승강기 <input type="number" id="frm-elev" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 대 
+                                &nbsp;&nbsp;|&nbsp;&nbsp; 주차장: <input type="text" id="frm-park" style="width:120px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="기계식 및 옥외">
                             </td>
                         </tr>
 
                         <tr>
-                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">화재보험<br>가입 내역</th>
-                            <td style="padding:10px; border:1px solid #cbd5e1;">
-                                <div style="margin-bottom:10px;">
-                                    <span style="color:#64748b; margin-right:15px; font-weight:bold;">가입 유무:</span>
-                                    <label style="margin-right:15px;"><input type="radio" name="overview-insurance-yn" value="O" checked> 가입(O)</label>
-                                    <label><input type="radio" name="overview-insurance-yn" value="X"> 미가입(X)</label>
-                                </div>
-                                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                                    <div><span style="color:#64748b; font-weight:bold;">보험사명:</span> <input type="text" id="overview-insurance-company" style="width:120px; padding:4px; border:1px solid #ccc; border-radius:4px;"></div>
-                                    <div style="width:100%;"><span style="color:#64748b; font-weight:bold;">보험기간:</span> <input type="text" id="overview-insurance-date" style="width:85%; padding:4px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 2026.01.01 ~ 2027.01.01"></div>
-                                </div>
+                            <th style="background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="3">인원현황</th>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                거주인원 총 <input type="number" id="frm-res-tot" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 1인실: <input type="number" id="frm-res-1" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 2인실: <input type="number" id="frm-res-2" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                근무인원 <input type="number" id="frm-emp-tot" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 주간 <input type="number" id="frm-emp-d" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 야간 <input type="number" id="frm-emp-n" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
+                                고령자 <input type="number" id="frm-vul-old" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 영유아 <input type="number" id="frm-vul-chi" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 장애인 <input type="number" id="frm-vul-dis" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th style="background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;">화재보험가입</th>
+                            <td colspan="2" style="padding:0; border:1px solid #cbd5e1;">
+                                <table style="width:100%; border-collapse:collapse; text-align:center;">
+                                    <tr style="background:#f8fafc; border-bottom:1px solid #cbd5e1;">
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">가입기간</th>
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">보험사명</th>
+                                        <th style="padding:6px; border-right:1px solid #cbd5e1; font-weight:normal;">가입대상</th>
+                                        <th style="padding:6px; font-weight:normal;">가입금액</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;" rowspan="2">
+                                            <input type="date" id="frm-ins-start" style="width:100px; padding:2px; font-size:11px;"><br>~<br><input type="date" id="frm-ins-end" style="width:100px; padding:2px; font-size:11px;">
+                                        </td>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;" rowspan="2">
+                                            <input type="text" id="frm-ins-comp" style="width:80px; padding:4px; text-align:center;" placeholder="한화 손해보험">
+                                        </td>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대인</td>
+                                        <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
+                                            <input type="number" id="frm-ins-p" style="width:60px; padding:4px; text-align:right;"> 천만원
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대물</td>
+                                        <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
+                                            <input type="text" id="frm-ins-m" style="width:60px; padding:4px; text-align:right;"> 천만원
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </tbody>
@@ -260,67 +299,66 @@ function renderOverviewForm(name, address) {
         targetGenTable.innerHTML = formHTML;
     }
     
+    // 빈 박스 완전 숨김
     if(targetFacTable) {
         targetFacTable.innerHTML = "";
         targetFacTable.style.display = 'none';
         const parentPanel = targetFacTable.closest('.info-panel') || targetFacTable.parentElement;
         if(parentPanel) parentPanel.style.display = 'none';
     }
-    
-    setTimeout(() => {
-        const calcSum = (mId, fId, totId) => {
-            const m = parseInt(document.getElementById(mId).value) || 0;
-            const f = parseInt(document.getElementById(fId).value) || 0;
-            document.getElementById(totId).innerText = m + f;
-        };
-
-        ['overview-emp-m', 'overview-emp-f'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.addEventListener('input', () => calcSum('overview-emp-m', 'overview-emp-f', 'overview-emp-total'));
-        });
-
-        ['overview-user-m', 'overview-user-f'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.addEventListener('input', () => calcSum('overview-user-m', 'overview-user-f', 'overview-user-total'));
-        });
-    }, 100);
 }
 
+// [5] 보고서 연동용 데이터 추출 및 저장 함수
 function saveOverviewData() {
-    const name = document.getElementById('overview-name')?.value;
+    const name = document.getElementById('frm-name')?.value;
     if(!name) { alert("사업장명을 입력해주세요."); return; }
     
-    const insYnNode = document.querySelector('input[name="overview-insurance-yn"]:checked');
-    
+    // 좌측 및 우측 폼의 모든 데이터를 수집하여 구조화된 객체로 묶습니다.
     const overviewData = {
+        // 기본 정보 (좌측)
         name: name,
-        ceo: document.getElementById('overview-ceo')?.value,
-        address: document.getElementById('overview-address')?.value,
-        contact: document.getElementById('overview-contact')?.value,
-        industry: document.getElementById('overview-industry')?.value,
-        manager: document.getElementById('overview-manager')?.value,
+        ceo: document.getElementById('frm-ceo')?.value,
+        address: document.getElementById('frm-addr')?.value,
+        contact: document.getElementById('frm-contact')?.value,
+        industry: document.getElementById('frm-industry')?.value,
+        manager: document.getElementById('frm-manager')?.value,
+        service: document.getElementById('frm-service')?.value,
         
-        empM: document.getElementById('overview-emp-m')?.value,
-        empF: document.getElementById('overview-emp-f')?.value,
-        empTotal: document.getElementById('overview-emp-total')?.innerText,
-        userM: document.getElementById('overview-user-m')?.value,
-        userF: document.getElementById('overview-user-f')?.value,
-        userTotal: document.getElementById('overview-user-total')?.innerText,
+        // 규모/구조 (우측 1)
+        areaBuild: document.getElementById('frm-area-build')?.value,
+        areaTot: document.getElementById('frm-area-tot')?.value,
+        usage: document.getElementById('frm-usage')?.value,
+        fireClass: document.getElementById('frm-fire-class')?.value,
+        bldCnt: document.getElementById('frm-bld-cnt')?.value,
+        flrG: document.getElementById('frm-flr-g')?.value,
+        flrU: document.getElementById('frm-flr-u')?.value,
+        structure: document.getElementById('frm-structure')?.value,
+        stair: document.getElementById('frm-stair')?.value,
+        elev: document.getElementById('frm-elev')?.value,
+        park: document.getElementById('frm-park')?.value,
         
-        areaLand: document.getElementById('overview-area-land')?.value,
-        areaTotal: document.getElementById('overview-area-total')?.value,
-        floorUnder: document.getElementById('overview-floor-under')?.value,
-        floorGround: document.getElementById('overview-floor-ground')?.value,
-        structure: document.getElementById('overview-structure')?.value,
+        // 인원현황 (우측 2)
+        resTot: document.getElementById('frm-res-tot')?.value,
+        res1: document.getElementById('frm-res-1')?.value,
+        res2: document.getElementById('frm-res-2')?.value,
+        empTot: document.getElementById('frm-emp-tot')?.value,
+        empD: document.getElementById('frm-emp-d')?.value,
+        empN: document.getElementById('frm-emp-n')?.value,
+        vulOld: document.getElementById('frm-vul-old')?.value,
+        vulChi: document.getElementById('frm-vul-chi')?.value,
+        vulDis: document.getElementById('frm-vul-dis')?.value,
         
-        insuranceYn: insYnNode ? insYnNode.value : 'X',
-        insuranceCompany: document.getElementById('overview-insurance-company')?.value,
-        insuranceDate: document.getElementById('overview-insurance-date')?.value,
-        service: document.getElementById('overview-service')?.value
+        // 화재보험 (우측 3)
+        insStart: document.getElementById('frm-ins-start')?.value,
+        insEnd: document.getElementById('frm-ins-end')?.value,
+        insComp: document.getElementById('frm-ins-comp')?.value,
+        insP: document.getElementById('frm-ins-p')?.value,
+        insM: document.getElementById('frm-ins-m')?.value
     };
     
+    // 로컬 스토리지에 저장하여 다른 탭(보고서 생성)에서 사용할 수 있도록 대기
     localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
-    alert(`[${name}] 일반현황 데이터가 저장되었습니다.\n추후 보고서 출력 시 이 내용이 그대로 맵핑됩니다.`);
+    alert(`[${name}]의 모든 상세 데이터가 저장되었습니다.\n추후 출력될 최종 보고서의 [일반개요] 표에 100% 매핑됩니다.`);
 }
 
 function fetchFacilityData() {} 
