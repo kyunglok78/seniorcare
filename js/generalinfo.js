@@ -28,7 +28,7 @@ function initMap() {
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
     if(!keyword) { 
-        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
+        alert("주소 또는 지역명(기관명)을 입력해주세요."); 
         return; 
     }
     ps.keywordSearch(keyword, placesSearchCB);
@@ -122,7 +122,7 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 좌우 2단 분할 및 이미지 양식(표) 100% 매칭
+// 💡 [핵심] 화면 꽉 차게 좌우 분할 및 넓이 강제 확장
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
@@ -137,11 +137,10 @@ function renderOverviewForm(name, address) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
 
-    // 좌우 50:50 레이아웃 시작
     const formHTML = `
-        <div style="display: flex; gap: 20px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
+        <div style="display: flex; gap: 40px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
             
-            <div style="flex: 1; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="flex: 1; padding-right: 10px;">
                 <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #2563eb; padding-left:10px; font-size:16px;">1. 기본 정보</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
                     <tbody>
@@ -191,7 +190,7 @@ function renderOverviewForm(name, address) {
                 </table>
             </div>
 
-            <div style="flex: 1; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="flex: 1;">
                 <h3 style="margin-top:0; color:#1e293b; border-left:4px solid #10b981; padding-left:10px; font-size:16px;">2. 시설 및 규모 상세</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left; border-top: 2px solid #1e293b;">
                     <tbody>
@@ -295,16 +294,33 @@ function renderOverviewForm(name, address) {
         </div>
     `;
 
-    if(targetGenTable) {
+    // 💡 [핵심] 기존의 좁은 틀(레이아웃)을 자바스크립트로 강제 확장합니다.
+    if(targetGenTable && targetFacTable) {
         targetGenTable.innerHTML = formHTML;
-    }
-    
-    // 빈 박스 완전 숨김
-    if(targetFacTable) {
-        targetFacTable.innerHTML = "";
-        targetFacTable.style.display = 'none';
-        const parentPanel = targetFacTable.closest('.info-panel') || targetFacTable.parentElement;
-        if(parentPanel) parentPanel.style.display = 'none';
+        
+        // 1. 우측의 텅 빈 패널과 그 부모 요소를 완전히 화면에서 숨깁니다.
+        let rightEl = targetFacTable;
+        while(rightEl && rightEl.parentElement) {
+            rightEl.style.display = 'none';
+            // 만약 상위 부모가 왼쪽 패널까지 포함하고 있다면 삭제를 멈춥니다.
+            if (rightEl.parentElement.contains(targetGenTable)) break; 
+            rightEl = rightEl.parentElement;
+        }
+
+        // 2. 왼쪽 패널이 화면 100%를 차지하도록 강제로 넓혀줍니다!
+        let leftEl = targetGenTable;
+        while(leftEl && leftEl.parentElement) {
+            leftEl.style.width = '100%';
+            leftEl.style.maxWidth = '100%';
+            leftEl.style.flex = '0 0 100%';
+            
+            // 양쪽을 담고 있던 제일 큰 부모 컨테이너를 만나면, 100%로 쫙 펴지게 만듭니다.
+            if (leftEl.parentElement.contains(targetFacTable)) {
+                leftEl.parentElement.style.display = 'block'; 
+                break;
+            }
+            leftEl = leftEl.parentElement;
+        }
     }
 }
 
@@ -313,9 +329,7 @@ function saveOverviewData() {
     const name = document.getElementById('frm-name')?.value;
     if(!name) { alert("사업장명을 입력해주세요."); return; }
     
-    // 좌측 및 우측 폼의 모든 데이터를 수집하여 구조화된 객체로 묶습니다.
     const overviewData = {
-        // 기본 정보 (좌측)
         name: name,
         ceo: document.getElementById('frm-ceo')?.value,
         address: document.getElementById('frm-addr')?.value,
@@ -324,7 +338,6 @@ function saveOverviewData() {
         manager: document.getElementById('frm-manager')?.value,
         service: document.getElementById('frm-service')?.value,
         
-        // 규모/구조 (우측 1)
         areaBuild: document.getElementById('frm-area-build')?.value,
         areaTot: document.getElementById('frm-area-tot')?.value,
         usage: document.getElementById('frm-usage')?.value,
@@ -337,7 +350,6 @@ function saveOverviewData() {
         elev: document.getElementById('frm-elev')?.value,
         park: document.getElementById('frm-park')?.value,
         
-        // 인원현황 (우측 2)
         resTot: document.getElementById('frm-res-tot')?.value,
         res1: document.getElementById('frm-res-1')?.value,
         res2: document.getElementById('frm-res-2')?.value,
@@ -348,7 +360,6 @@ function saveOverviewData() {
         vulChi: document.getElementById('frm-vul-chi')?.value,
         vulDis: document.getElementById('frm-vul-dis')?.value,
         
-        // 화재보험 (우측 3)
         insStart: document.getElementById('frm-ins-start')?.value,
         insEnd: document.getElementById('frm-ins-end')?.value,
         insComp: document.getElementById('frm-ins-comp')?.value,
@@ -356,9 +367,8 @@ function saveOverviewData() {
         insM: document.getElementById('frm-ins-m')?.value
     };
     
-    // 로컬 스토리지에 저장하여 다른 탭(보고서 생성)에서 사용할 수 있도록 대기
     localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
-    alert(`[${name}]의 모든 상세 데이터가 저장되었습니다.\n추후 출력될 최종 보고서의 [일반개요] 표에 100% 매핑됩니다.`);
+    alert(`[${name}]의 상세 데이터가 넓고 쾌적한 폼에 성공적으로 저장되었습니다!\n보고서에 그대로 연동됩니다.`);
 }
 
 function fetchFacilityData() {} 
