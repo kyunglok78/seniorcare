@@ -1,5 +1,3 @@
-// generalinfo.js (최종 - 카카오 장소검색 + 위험성평가 개요 폼)
-
 let mapInstance = null;
 let ps = null; // 카카오 장소 검색 서비스 객체
 let infowindow = null;
@@ -25,7 +23,7 @@ function initMap() {
     infowindow = new kakao.maps.InfoWindow({zIndex:1});
     mapInstance.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-    // 💡 처음 들어왔을 때 빈 양식을 보여줍니다.
+    // 처음 들어왔을 때 빈 양식을 보여줍니다.
     renderOverviewForm("", "");
 }
 
@@ -122,13 +120,14 @@ function updateFacilityListUI(places) {
             infowindow.setContent(`<div style="padding:5px;font-size:12px;">${place.place_name}</div>`);
             infowindow.open(mapInstance, markers[i]);
             
+            // 리스트 클릭 시 우측 사업장 개요 폼 세팅
             renderOverviewForm(place.place_name, address);
         };
         container.appendChild(itemDiv);
     });
 }
 
-// [3] 직접 입력 (목록에 없는 경우 수동 입력)
+// [3] 수동 입력 (목록에 없는 경우 직접 추가)
 function addCustomFacility() {
     const customName = prompt("사업장(시설)의 이름을 입력하세요:", "OOO 요양원");
     if(!customName) return;
@@ -138,14 +137,15 @@ function addCustomFacility() {
     alert("우측 입력폼에 사업장 정보가 반영되었습니다. 상세 내역을 입력해주세요.");
 }
 
-// [4] 사업장 개요 (위험성평가 기준) 폼 렌더링
+// [4] 사업장 개요 폼 렌더링 (단일 폼 통합 및 에러 수정)
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
     const targetFacTable = document.getElementById('table-instt-status');
+    
+    // 불필요한 추가 버튼들 숨김
     const btnGen = document.getElementById('btn-add-gen-row');
     const btnFac = document.getElementById('btn-add-fac-row');
-    
     if(btnGen) btnGen.style.display = 'none';
     if(btnFac) btnFac.style.display = 'none';
     
@@ -153,6 +153,7 @@ function renderOverviewForm(name, address) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(위험성평가 사업장 개요)</span>`;
     }
 
+    // 통합된 사업장 개요 폼 HTML
     const formHTML = `
         <div style="background: #fff; padding: 15px; border-radius: 8px; font-family: 'Pretendard', sans-serif;">
             <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
@@ -170,7 +171,7 @@ function renderOverviewForm(name, address) {
                     <tr>
                         <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1; color:#334155;">소재지</th>
                         <td colspan="3" style="padding:8px; border:1px solid #cbd5e1;">
-                            <input type="text" id="overview-address" value="${address}" style="width:96%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="주소 입력">
+                            <input type="text" id="overview-address" value="${address}" style="width:96%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="전체 주소 입력">
                         </td>
                     </tr>
                     <tr>
@@ -226,29 +227,30 @@ function renderOverviewForm(name, address) {
             </table>
             <div style="text-align:right; margin-top:20px;">
                 <button onclick="saveOverviewData()" style="background:#2563eb; color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    💾 사업장 정보 저장 및 평가 시작
+                    💾 기본 정보 저장 및 다음 단계 이동
                 </button>
             </div>
         </div>
     `;
 
-    // 위쪽 영역에 폼을 넣습니다.
+    // 폼 삽입
     if(targetGenTable) {
         targetGenTable.innerHTML = formHTML;
     }
     
-    // 💡 [핵심 해결] 아래쪽 빈 껍데기 박스를 통째로 숨깁니다.
+    // 💡 하단 빈 박스 완벽 숨김 처리 (기존 구조 호환 유지)
     if(targetFacTable) {
         targetFacTable.innerHTML = "";
         targetFacTable.style.display = 'none';
         
-        // 상위를 감싸고 있는 패널(div)까지 찾아내어 완전히 보이지 않게 만듭니다.
-        const parentPanel = targetFacTable.parentElement;
+        // 감싸고 있는 상위 div 박스까지 안 보이도록 처리
+        const parentPanel = targetFacTable.closest('.info-panel') || targetFacTable.parentElement;
         if(parentPanel) {
             parentPanel.style.display = 'none';
         }
     }
     
+    // 인원수 합계 자동계산 이벤트 연결
     setTimeout(() => {
         const mInput = document.getElementById('overview-emp-m');
         const fInput = document.getElementById('overview-emp-f');
@@ -265,7 +267,7 @@ function renderOverviewForm(name, address) {
     }, 100);
 }
 
-// [5] 사업장 정보 저장 (보고서 자동 바인딩 준비)
+// [5] 입력 정보 임시 저장 (추후 보고서 DB 연동용)
 function saveOverviewData() {
     const name = document.getElementById('overview-name')?.value;
     if(!name) {
@@ -275,7 +277,6 @@ function saveOverviewData() {
     
     const insYnNode = document.querySelector('input[name="overview-insurance-yn"]:checked');
     
-    // 로컬 스토리지에 세부 항목까지 모두 저장
     const overviewData = {
         name: name,
         ceo: document.getElementById('overview-ceo')?.value,
@@ -296,10 +297,11 @@ function saveOverviewData() {
         service: document.getElementById('overview-service')?.value
     };
     
+    // 브라우저에 데이터 임시 저장
     localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
-    alert(`[${name}] 사업장 개요가 임시 저장되었습니다.\n상단의 탭으로 이동하여 위험성 평가를 진행해주세요.`);
+    alert(`[${name}] 기본 정보가 시스템에 저장되었습니다.\n상단 탭에서 평가 또는 보고서 작성을 진행해주세요.`);
 }
 
-// 공공데이터 미사용 함수 더미화 (기존 HTML 에러 방지)
+// 기존 HTML 버튼에서 호출될 수 있는 사용 안 하는 함수들 (에러 방지용)
 function fetchFacilityData() {} 
 function loadMockFacilities() {}
