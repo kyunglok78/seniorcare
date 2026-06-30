@@ -28,7 +28,7 @@ function initMap() {
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
     if(!keyword) { 
-        alert("주소 또는 지역명(기관명)을 입력해주세요."); 
+        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
         return; 
     }
     ps.keywordSearch(keyword, placesSearchCB);
@@ -122,7 +122,7 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 화면 꽉 차게 좌우 분할 및 넓이 강제 확장
+// 💡 [핵심] 좌우 2단 분할 및 음수(-) 입력 방지 로직 적용, 하단 저장버튼 제거
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
@@ -136,6 +136,9 @@ function renderOverviewForm(name, address) {
     if(targetTitle) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
+
+    // min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" 속성을 통해 음수를 차단합니다.
+    const numInputFilter = `min="0" oninput="if(this.value < 0) this.value = 0;"`;
 
     const formHTML = `
         <div style="display: flex; gap: 40px; width: 100%; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
@@ -197,10 +200,10 @@ function renderOverviewForm(name, address) {
                         <tr>
                             <th style="width:18%; background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="5">규모/구조</th>
                             <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
-                                건축면적 <input type="text" id="frm-area-build" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
+                                건축면적 <input type="number" id="frm-area-build" ${numInputFilter} step="0.01" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
                             </td>
                             <td style="width:41%; padding:6px 10px; border:1px solid #cbd5e1;">
-                                연면적 <input type="text" id="frm-area-tot" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
+                                연면적 <input type="number" id="frm-area-tot" ${numInputFilter} step="0.01" style="width:60px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:right;"> ㎡
                             </td>
                         </tr>
                         <tr>
@@ -208,13 +211,13 @@ function renderOverviewForm(name, address) {
                                 용도: <input type="text" id="frm-usage" style="width:100px; border:none; border-bottom:1px solid #94a3b8; outline:none;" value="노인복지시설">
                             </td>
                             <td style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                소방안전관리대상: <input type="text" id="frm-fire-class" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none;"> 급
+                                소방안전관리대상: <input type="number" id="frm-fire-class" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 급
                             </td>
                         </tr>
                         <tr>
                             <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                건축동수 <input type="number" id="frm-bld-cnt" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개동 
-                                <span style="color:#64748b; margin-left:10px;">(지상 <input type="number" id="frm-flr-g" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층 / 지하 <input type="number" id="frm-flr-u" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층)</span>
+                                건축동수 <input type="number" id="frm-bld-cnt" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개동 
+                                <span style="color:#64748b; margin-left:10px;">(지상 <input type="number" id="frm-flr-g" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층 / 지하 <input type="number" id="frm-flr-u" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층)</span>
                             </td>
                         </tr>
                         <tr>
@@ -224,8 +227,8 @@ function renderOverviewForm(name, address) {
                         </tr>
                         <tr>
                             <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                피난계단 <input type="number" id="frm-stair" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개소 
-                                &nbsp;&nbsp;|&nbsp;&nbsp; 승강기 <input type="number" id="frm-elev" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 대 
+                                피난계단 <input type="number" id="frm-stair" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개소 
+                                &nbsp;&nbsp;|&nbsp;&nbsp; 승강기 <input type="number" id="frm-elev" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 대 
                                 &nbsp;&nbsp;|&nbsp;&nbsp; 주차장: <input type="text" id="frm-park" style="width:120px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="기계식 및 옥외">
                             </td>
                         </tr>
@@ -233,21 +236,21 @@ function renderOverviewForm(name, address) {
                         <tr>
                             <th style="background:#f1f5f9; padding:8px; border:1px solid #cbd5e1; color:#334155; text-align:center;" rowspan="3">인원현황</th>
                             <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                거주인원 총 <input type="number" id="frm-res-tot" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
-                                <span style="color:#64748b; margin-left:10px;">( 1인실: <input type="number" id="frm-res-1" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 2인실: <input type="number" id="frm-res-2" style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                                거주인원 총 <input type="number" id="frm-res-tot" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 1인실: <input type="number" id="frm-res-1" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 2인실: <input type="number" id="frm-res-2" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
                             </td>
                         </tr>
                         <tr>
                             <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                근무인원 <input type="number" id="frm-emp-tot" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
-                                <span style="color:#64748b; margin-left:10px;">( 주간 <input type="number" id="frm-emp-d" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 야간 <input type="number" id="frm-emp-n" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
+                                근무인원 <input type="number" id="frm-emp-tot" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center; font-weight:bold;"> 명 
+                                <span style="color:#64748b; margin-left:10px;">( 주간 <input type="number" id="frm-emp-d" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명, 야간 <input type="number" id="frm-emp-n" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명 )</span>
                             </td>
                         </tr>
                         <tr>
                             <td colspan="2" style="padding:6px 10px; border:1px solid #cbd5e1;">
-                                고령자 <input type="number" id="frm-vul-old" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
-                                &nbsp;&nbsp;&nbsp;&nbsp; 영유아 <input type="number" id="frm-vul-chi" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
-                                &nbsp;&nbsp;&nbsp;&nbsp; 장애인 <input type="number" id="frm-vul-dis" style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                고령자 <input type="number" id="frm-vul-old" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 영유아 <input type="number" id="frm-vul-chi" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
+                                &nbsp;&nbsp;&nbsp;&nbsp; 장애인 <input type="number" id="frm-vul-dis" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 명
                             </td>
                         </tr>
 
@@ -270,13 +273,13 @@ function renderOverviewForm(name, address) {
                                         </td>
                                         <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대인</td>
                                         <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
-                                            <input type="number" id="frm-ins-p" style="width:60px; padding:4px; text-align:right;"> 천만원
+                                            <input type="number" id="frm-ins-p" ${numInputFilter} style="width:60px; padding:4px; text-align:right;"> 천만원
                                         </td>
                                     </tr>
                                     <tr>
                                         <td style="padding:6px; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1;">대물</td>
                                         <td style="padding:6px; border-bottom:1px solid #cbd5e1;">
-                                            <input type="text" id="frm-ins-m" style="width:60px; padding:4px; text-align:right;"> 천만원
+                                            <input type="number" id="frm-ins-m" ${numInputFilter} style="width:60px; padding:4px; text-align:right;"> 천만원
                                         </td>
                                     </tr>
                                 </table>
@@ -286,35 +289,24 @@ function renderOverviewForm(name, address) {
                 </table>
             </div>
         </div>
-
-        <div style="text-align:right; margin-top:25px; width:100%;">
-            <button onclick="saveOverviewData()" style="background:#2563eb; color:white; border:none; padding:14px 30px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:15px; box-shadow: 0 4px 6px rgba(37,99,235,0.2);">
-                💾 입력 정보 저장 및 보고서 데이터 연동 준비
-            </button>
-        </div>
     `;
 
-    // 💡 [핵심] 기존의 좁은 틀(레이아웃)을 자바스크립트로 강제 확장합니다.
     if(targetGenTable && targetFacTable) {
         targetGenTable.innerHTML = formHTML;
         
-        // 1. 우측의 텅 빈 패널과 그 부모 요소를 완전히 화면에서 숨깁니다.
         let rightEl = targetFacTable;
         while(rightEl && rightEl.parentElement) {
             rightEl.style.display = 'none';
-            // 만약 상위 부모가 왼쪽 패널까지 포함하고 있다면 삭제를 멈춥니다.
             if (rightEl.parentElement.contains(targetGenTable)) break; 
             rightEl = rightEl.parentElement;
         }
 
-        // 2. 왼쪽 패널이 화면 100%를 차지하도록 강제로 넓혀줍니다!
         let leftEl = targetGenTable;
         while(leftEl && leftEl.parentElement) {
             leftEl.style.width = '100%';
             leftEl.style.maxWidth = '100%';
             leftEl.style.flex = '0 0 100%';
             
-            // 양쪽을 담고 있던 제일 큰 부모 컨테이너를 만나면, 100%로 쫙 펴지게 만듭니다.
             if (leftEl.parentElement.contains(targetFacTable)) {
                 leftEl.parentElement.style.display = 'block'; 
                 break;
@@ -324,10 +316,14 @@ function renderOverviewForm(name, address) {
     }
 }
 
-// [5] 보고서 연동용 데이터 추출 및 저장 함수
+// 💡 [핵심 통합] 우측 상단의 공통 '저장' 버튼을 위한 전역 함수
+// 나중에 index.html에서 빨간색 [위험성평가 결과 임시저장] 버튼을 누르면 이 함수도 같이 실행되게 연동할 예정입니다.
 function saveOverviewData() {
     const name = document.getElementById('frm-name')?.value;
-    if(!name) { alert("사업장명을 입력해주세요."); return; }
+    if(!name) { 
+        // 탭이 달라서 폼이 없는 경우 에러 방지
+        return null; 
+    }
     
     const overviewData = {
         name: name,
@@ -368,7 +364,7 @@ function saveOverviewData() {
     };
     
     localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
-    alert(`[${name}]의 상세 데이터가 넓고 쾌적한 폼에 성공적으로 저장되었습니다!\n보고서에 그대로 연동됩니다.`);
+    return overviewData;
 }
 
 function fetchFacilityData() {} 
