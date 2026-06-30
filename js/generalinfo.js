@@ -1,4 +1,4 @@
-// generalinfo.js (최종 - 카카오 장소검색 + 수동입력 폼 전환 버전)
+// generalinfo.js (최종 - 카카오 장소검색 + 위험성평가 개요 폼)
 
 let mapInstance = null;
 let ps = null; // 카카오 장소 검색 서비스 객체
@@ -33,11 +33,11 @@ function initMap() {
 function searchFacility() {
     const keyword = document.getElementById('search-facility-input').value.trim();
     if(!keyword) { 
-        alert("검색할 기관명이나 지역을 입력해주세요. (예: 강남구 요양원)"); 
+        alert("주소 또는 지역명(기관명)을 입력해주세요. (예: 서초구 형촌2길, OOO요양원)"); 
         return; 
     }
     
-    // 💡 공공데이터 대신 카카오 장소 검색 실행 (에러 0%)
+    // 카카오 장소 검색 실행
     ps.keywordSearch(keyword, placesSearchCB);
 }
 
@@ -46,7 +46,7 @@ function placesSearchCB(data, status, pagination) {
     if (status === kakao.maps.services.Status.OK) {
         displayPlaces(data);
     } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
-        alert('검색 결과가 존재하지 않습니다.');
+        alert('검색 결과가 존재하지 않습니다. 주소를 다시 확인해주세요.');
         updateFacilityListUI([]);
     } else if (status === kakao.maps.services.Status.ERROR) {
         alert('검색 중 오류가 발생했습니다.');
@@ -67,7 +67,6 @@ function displayPlaces(places) {
         const title = places[i].place_name;
         const address = places[i].road_address_name || places[i].address_name;
 
-        // 💡 마커 클릭 이벤트
         kakao.maps.event.addListener(marker, 'click', function() {
             infowindow.setContent(`<div style="padding:5px;font-size:12px;">${title}</div>`);
             infowindow.open(mapInstance, marker);
@@ -75,7 +74,6 @@ function displayPlaces(places) {
             // 클릭 시 우측 사업장 개요 폼에 이름과 주소 자동 반영
             renderOverviewForm(title, address);
             
-            // 좌측 리스트 활성화 색상 변경
             document.querySelectorAll('.facility-list-item').forEach(el => el.classList.remove('active'));
             const listItem = document.getElementById(`list-item-${i}`);
             if(listItem) listItem.classList.add('active');
@@ -124,14 +122,13 @@ function updateFacilityListUI(places) {
             infowindow.setContent(`<div style="padding:5px;font-size:12px;">${place.place_name}</div>`);
             infowindow.open(mapInstance, markers[i]);
             
-            // 💡 리스트 클릭 시에도 우측 폼에 정보 자동 반영
             renderOverviewForm(place.place_name, address);
         };
         container.appendChild(itemDiv);
     });
 }
 
-// [3] 직접 입력 (버튼 클릭 시)
+// [3] 직접 입력 (목록에 없는 경우 수동 입력)
 function addCustomFacility() {
     const customName = prompt("사업장(시설)의 이름을 입력하세요:", "OOO 요양원");
     if(!customName) return;
@@ -141,7 +138,7 @@ function addCustomFacility() {
     alert("우측 입력폼에 사업장 정보가 반영되었습니다. 상세 내역을 입력해주세요.");
 }
 
-// [4] 사업장 개요 (위험성평가 기준) 입력 폼 렌더링 (가장 핵심!)
+// [4] 사업장 개요 (위험성평가 기준) 폼 렌더링
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
@@ -149,15 +146,13 @@ function renderOverviewForm(name, address) {
     const btnGen = document.getElementById('btn-add-gen-row');
     const btnFac = document.getElementById('btn-add-fac-row');
     
-    // 불필요한 기존 플러스 버튼 숨기기
     if(btnGen) btnGen.style.display = 'none';
     if(btnFac) btnFac.style.display = 'none';
     
     if(targetTitle) {
-        targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(위험성평가 사업장 개요 입력)</span>`;
+        targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(위험성평가 사업장 개요)</span>`;
     }
 
-    // 💡 대표님이 주신 이미지를 바탕으로 구성한 완벽한 사업장 개요 표 양식
     const formHTML = `
         <div style="background: #fff; padding: 15px; border-radius: 8px; font-family: 'Pretendard', sans-serif;">
             <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border-top: 2px solid #1e293b;">
@@ -199,6 +194,29 @@ function renderOverviewForm(name, address) {
                         </td>
                     </tr>
                     <tr>
+                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1; color:#334155;">면적 및 구조</th>
+                        <td colspan="3" style="padding:8px; border:1px solid #cbd5e1;">
+                            <div style="display:flex; flex-wrap:wrap; gap:15px; align-items:center;">
+                                <div><span style="color:#64748b;">대지면적:</span> <input type="number" id="overview-area-land" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
+                                <div><span style="color:#64748b;">연면적:</span> <input type="number" id="overview-area-total" style="width:70px; padding:4px; border:1px solid #ccc; border-radius:4px;"> ㎡</div>
+                                <div><span style="color:#64748b;">층수:</span> 지하 <input type="number" id="overview-floor-under" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층 / 지상 <input type="number" id="overview-floor-ground" style="width:40px; padding:4px; border:1px solid #ccc; border-radius:4px;"> 층</div>
+                                <div><span style="color:#64748b;">구조:</span> <input type="text" id="overview-structure" style="width:140px; padding:4px; border:1px solid #ccc; border-radius:4px;" placeholder="예: 철근콘크리트조"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1; color:#334155;">화재보험 가입</th>
+                        <td colspan="3" style="padding:8px; border:1px solid #cbd5e1;">
+                            <div style="display:flex; gap:15px; align-items:center;">
+                                <label><input type="radio" name="overview-insurance-yn" value="Y" checked> 가입</label>
+                                <label><input type="radio" name="overview-insurance-yn" value="N"> 미가입</label>
+                                <span style="border-left:1px solid #ccc; height:15px; margin:0 5px;"></span>
+                                <div><span style="color:#64748b;">보험사명:</span> <input type="text" id="overview-insurance-company" style="width:130px; padding:4px; border:1px solid #ccc; border-radius:4px;" placeholder="예: KB손해보험"></div>
+                                <div><span style="color:#64748b;">만기일자:</span> <input type="date" id="overview-insurance-date" style="padding:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
                         <th style="background:#f8fafc; padding:12px; border:1px solid #cbd5e1; color:#334155;">주요 사업<br>(생산품)</th>
                         <td colspan="3" style="padding:8px; border:1px solid #cbd5e1;">
                             <textarea id="overview-service" rows="3" style="width:96%; padding:8px; border:1px solid #ccc; border-radius:4px; resize:vertical;" placeholder="예: 노인요양시설 운영, 주야간 보호 서비스 등"></textarea>
@@ -215,9 +233,8 @@ function renderOverviewForm(name, address) {
     `;
 
     if(targetGenTable) targetGenTable.innerHTML = formHTML;
-    if(targetFacTable) targetFacTable.innerHTML = ""; // 하단 표는 지우고 사업장 개요 하나로 통합
+    if(targetFacTable) targetFacTable.innerHTML = ""; // 하단 표 통합
     
-    // 💡 근로자 수 남, 여 입력 시 '총 합계' 자동 계산 기능
     setTimeout(() => {
         const mInput = document.getElementById('overview-emp-m');
         const fInput = document.getElementById('overview-emp-f');
@@ -234,7 +251,7 @@ function renderOverviewForm(name, address) {
     }, 100);
 }
 
-// [5] 입력한 사업장 정보 저장 로직 (나중에 보고서로 자동 연결됨)
+// [5] 사업장 정보 저장 (보고서 자동 바인딩 준비)
 function saveOverviewData() {
     const name = document.getElementById('overview-name')?.value;
     if(!name) {
@@ -242,7 +259,9 @@ function saveOverviewData() {
         return;
     }
     
-    // 로컬 스토리지에 저장하여 탭을 옮겨도 데이터가 유지되도록 함
+    const insYnNode = document.querySelector('input[name="overview-insurance-yn"]:checked');
+    
+    // 로컬 스토리지에 세부 항목까지 모두 저장
     const overviewData = {
         name: name,
         ceo: document.getElementById('overview-ceo')?.value,
@@ -252,13 +271,21 @@ function saveOverviewData() {
         empM: document.getElementById('overview-emp-m')?.value,
         empF: document.getElementById('overview-emp-f')?.value,
         empTotal: document.getElementById('overview-emp-total')?.innerText,
+        areaLand: document.getElementById('overview-area-land')?.value,
+        areaTotal: document.getElementById('overview-area-total')?.value,
+        floorUnder: document.getElementById('overview-floor-under')?.value,
+        floorGround: document.getElementById('overview-floor-ground')?.value,
+        structure: document.getElementById('overview-structure')?.value,
+        insuranceYn: insYnNode ? insYnNode.value : 'N',
+        insuranceCompany: document.getElementById('overview-insurance-company')?.value,
+        insuranceDate: document.getElementById('overview-insurance-date')?.value,
         service: document.getElementById('overview-service')?.value
     };
     
     localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
-    alert(`[${name}] 사업장 개요가 임시 저장되었습니다.\n상단의 '위험성 평가' 탭으로 이동하여 평가를 진행해주세요.`);
+    alert(`[${name}] 사업장 개요가 임시 저장되었습니다.\n상단의 탭으로 이동하여 위험성 평가를 진행해주세요.`);
 }
 
-// * 기존 API 관련 미사용 함수 처리 (에러 방지용)
+// 공공데이터 미사용 함수 더미화 (기존 HTML 에러 방지)
 function fetchFacilityData() {} 
 function loadMockFacilities() {}
