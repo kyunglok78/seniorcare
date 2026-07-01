@@ -19,7 +19,7 @@
             <div class="menu-title">MENU</div>
             <a class="menu-item active" onclick="showPage('page-general', this)">📋 시설 일반 현황</a>
             <a class="menu-item" onclick="showPage('page-eval', this)">📝 현장 위험 평가</a>
-            <a class="menu-item" onclick="showPage('page-report', this)">📊 결과 보고서</a>
+            <a class="menu-item" onclick="showPage('page-report', this)">📊 결과 분석 및 보고서</a>
         </div>
     </div>
 
@@ -68,13 +68,51 @@
         </div>
 
         <div id="page-eval" class="page">
-            <h2>📝 현장 위험 평가</h2>
-            <p style="color: #64748b; margin-top: 15px;">이곳에 현장 체크리스트 화면이 들어갈 예정입니다.</p>
+            <h2 style="margin-bottom: 20px;">📝 현장 위험 평가 (체크리스트)</h2>
+            <div class="eval-section">
+                <div style="background: white; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <p style="color: #64748b;">현장 위험 평가 체크리스트 항목들이 여기에 표시됩니다.</p>
+                </div>
+            </div>
         </div>
 
         <div id="page-report" class="page">
-            <h2>📊 결과 보고서</h2>
-            <p style="color: #64748b; margin-top: 15px;">이곳에 최종 리포트 출력 화면이 들어갈 예정입니다.</p>
+            <h2 style="margin-bottom: 20px;">📊 현장 평가 결과 분석</h2>
+            
+            <div class="metrics-grid">
+                <div class="card">
+                    <h3>총 점검 항목</h3>
+                    <div class="value text-blue">0건</div>
+                </div>
+                <div class="card">
+                    <h3>안전 (Good)</h3>
+                    <div class="value text-green">0건</div>
+                </div>
+                <div class="card">
+                    <h3>주의 (Warning)</h3>
+                    <div class="value" style="color: #f59e0b;">0건</div>
+                </div>
+                <div class="card">
+                    <h3>위험 (Danger)</h3>
+                    <div class="value text-red">0건</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <div class="chart-row-top">
+                    <div class="chart-container-main" style="background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                        [종합 위험도 차트 영역]
+                    </div>
+                </div>
+                <div class="chart-grid-bottom">
+                    <div class="chart-container-sub" style="display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                        [분야별 위험 등급 분포 영역]
+                    </div>
+                    <div class="chart-container-sub" style="display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                        [위험도 상세 분석 영역]
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
