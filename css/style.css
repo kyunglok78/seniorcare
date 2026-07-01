@@ -2,9 +2,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
 body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; overflow: hidden; }
 
-/* 💡 [핵심] 사이드바 세로 100% Flex 적용으로 하단 버튼 영역 밀어내기 */
+/* 좌측 사이드바 전체 레이아웃 (플렉스 컨테이너로 설정하여 하단 영역 밀어내기) */
 .sidebar { width: 250px; background-color: #1e293b; color: white; display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; }
 .logo { padding: 20px; font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid #334155; text-align: center; }
+
+/* 메뉴 리스트 (스크롤 허용 및 남은 공간 채우기) */
 .menu { padding: 10px 0; flex-grow: 1; overflow-y: auto; }
 .menu-item { padding: 12px 20px; cursor: pointer; display: block; color: #cbd5e1; text-decoration: none; border-left: 4px solid transparent; }
 .menu-item:hover, .menu-item.active { background-color: #334155; color: white; border-left: 4px solid #3b82f6; }
@@ -19,45 +21,56 @@ body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; ove
 }
 .btn-sidebar-action:hover { background-color: #334155; color: white; transform: translateX(2px); }
 
-/* 버튼별 좌측 컬러 포인트 부여 */
+/* 사이드바 하단 버튼 컬러 포인트 */
 .btn-db { border-left: 4px solid #3b82f6; }
 .btn-save { border-left: 4px solid #ef4444; }
 .btn-load { border-left: 4px solid #10b981; }
 .btn-import { border-left: 4px solid #8b5cf6; }
 .btn-export { border-left: 4px solid #f59e0b; }
 
+/* 우측 메인 콘텐츠 컨테이너 */
 .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: hidden; }
 .header { background-color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; }
 .header-title { font-size: 1.2rem; font-weight: bold; color: #0f172a; }
 
-/* 페이지 스크롤 및 레이아웃 정의 */
+/* 페이지 스크롤 및 노출 제어 */
 .page { display: none; padding: 25px 30px; flex-direction: column; overflow-y: auto; height: 100%; }
 .page.active { display: flex; }
 
-/* 상단 지도 및 검색 결과창 3:2 고정 레이아웃 */
-.middle-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; height: 350px; margin-bottom: 25px; flex-shrink: 0; width: 100%; }
+/* 💡 [중요 수정] 상단 지도 및 검색 결과창 3:2 비율 고정 (폭 100% 명시) */
+.middle-grid { 
+    display: grid; 
+    grid-template-columns: 3fr 2fr; 
+    gap: 20px; 
+    height: 350px; 
+    margin-bottom: 25px; 
+    flex-shrink: 0; 
+    width: 100%; 
+}
 .map-container { background: #e2e8f0; border-radius: 10px; position: relative; height: 100%; overflow: hidden; }
 #kakao-map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-radius: 10px; z-index: 1; }
 
-/* 검색창 및 검색 리스트 */
+/* 검색바 디자인 */
 .search-bar { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
 .search-bar input { flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
 .search-bar button { padding: 10px 20px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+/* 리스트 컨테이너 */
 .list-container { overflow-y: auto; height: 100%; }
-.facility-list-item { padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background-color 0.2s; }
-.facility-list-item:hover { background-color: #f1f5f9; }
-.facility-list-item.active { background-color: #e0f2fe; border-left: 4px solid #3b82f6; }
-.facility-list-name { font-weight: bold; font-size: 1.05rem; color: #0f172a; margin-bottom: 5px; }
-.facility-list-addr { font-size: 0.85rem; color: #64748b; }
 
-/* 하단 100% 와이드 테이블 전용 스타일 패치 */
+/* 하단 일반 현황 폼 테이블 고정 스타일 */
 #table-general-status, #table-instt-status { width: 100% !important; max-width: 100% !important; margin-top: 15px; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
 th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
 th { background-color: #f8fafc; font-weight: bold; color: #475569; text-align: center; }
 
-/* 결과분석 탭 전용 격자 및 카드 스타일 */
+/* 상태 배지 */
+.status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+.status-good { background-color: #dcfce7; color: #16a34a; }
+
+/* ========================================= */
+/* 결과 분석 탭 전용 레이아웃 */
+/* ========================================= */
 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; flex-shrink: 0; }
 .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
 .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; }
@@ -69,6 +82,3 @@ th { background-color: #f8fafc; font-weight: bold; color: #475569; text-align: c
 .chart-container-main { width: 450px; height: 350px; }
 .chart-grid-bottom { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .chart-container-sub { height: 280px; width: 100%; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; padding: 15px; }
-
-.status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-.status-good { background-color: #dcfce7; color: #16a34a; }
