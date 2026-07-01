@@ -122,22 +122,16 @@ function addCustomFacility() {
     renderOverviewForm(customName, customAddr || "");
 }
 
-// 💡 [핵심] 좌우 2단 분할 및 음수(-) 입력 방지 로직 적용, 하단 저장버튼 제거
+// 💡 [핵심] 좌우 2단 분할 및 음수 차단 적용 / 주요사업 대신 '관계자 5명' 입력 폼 추가
 function renderOverviewForm(name, address) {
     const targetTitle = document.getElementById('current-info-facility-name');
     const targetGenTable = document.getElementById('table-general-status');
     const targetFacTable = document.getElementById('table-instt-status');
     
-    const btnGen = document.getElementById('btn-add-gen-row');
-    const btnFac = document.getElementById('btn-add-fac-row');
-    if(btnGen) btnGen.style.display = 'none';
-    if(btnFac) btnFac.style.display = 'none';
-    
     if(targetTitle) {
         targetTitle.innerHTML = `${name || "사업장을 검색/선택해주세요"} <span style="font-size:0.9rem; color:#10b981;">(보고서용 사업장 개요)</span>`;
     }
 
-    // min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" 속성을 통해 음수를 차단합니다.
     const numInputFilter = `min="0" oninput="if(this.value < 0) this.value = 0;"`;
 
     const formHTML = `
@@ -183,10 +177,24 @@ function renderOverviewForm(name, address) {
                                 <input type="text" id="frm-manager" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px;" placeholder="성명 및 연락처 기입">
                             </td>
                         </tr>
+                        
                         <tr>
-                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">주요 사업<br>(생산품)</th>
+                            <th style="background:#f8fafc; padding:12px 10px; border:1px solid #cbd5e1; color:#334155;">관계자<br>(안전진단 대응자)</th>
                             <td style="padding:8px; border:1px solid #cbd5e1;">
-                                <textarea id="frm-service" rows="11" style="width:95%; padding:6px; border:1px solid #ccc; border-radius:4px; resize:vertical;">노인요양시설 운영 및 주야간 보호 서비스</textarea>
+                                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">
+                                    <tr style="background:#f1f5f9; border-bottom:1px solid #cbd5e1;">
+                                        <th style="padding:6px; border:1px solid #cbd5e1; font-weight:normal; width:30%;">직급/소속</th>
+                                        <th style="padding:6px; border:1px solid #cbd5e1; font-weight:normal; width:30%;">성명</th>
+                                        <th style="padding:6px; border:1px solid #cbd5e1; font-weight:normal; width:40%;">연락처</th>
+                                    </tr>
+                                    ${[1,2,3,4,5].map(i => `
+                                    <tr>
+                                        <td style="padding:4px; border:1px solid #cbd5e1;"><input type="text" id="frm-resp-role-${i}" style="width:95%; padding:4px; border:1px solid #ccc; border-radius:3px;"></td>
+                                        <td style="padding:4px; border:1px solid #cbd5e1;"><input type="text" id="frm-resp-name-${i}" style="width:95%; padding:4px; border:1px solid #ccc; border-radius:3px;"></td>
+                                        <td style="padding:4px; border:1px solid #cbd5e1;"><input type="text" id="frm-resp-tel-${i}" style="width:95%; padding:4px; border:1px solid #ccc; border-radius:3px;"></td>
+                                    </tr>
+                                    `).join('')}
+                                </table>
                             </td>
                         </tr>
                     </tbody>
@@ -316,13 +324,21 @@ function renderOverviewForm(name, address) {
     }
 }
 
-// 💡 [핵심 통합] 우측 상단의 공통 '저장' 버튼을 위한 전역 함수
-// 나중에 index.html에서 빨간색 [위험성평가 결과 임시저장] 버튼을 누르면 이 함수도 같이 실행되게 연동할 예정입니다.
+// [5] 💡 데이터 저장 시 관계자 5명 정보 배열화하여 추가
 function saveOverviewData() {
     const name = document.getElementById('frm-name')?.value;
     if(!name) { 
-        // 탭이 달라서 폼이 없는 경우 에러 방지
         return null; 
+    }
+    
+    // 관계자 데이터 배열 수집
+    const responders = [];
+    for (let i = 1; i <= 5; i++) {
+        responders.push({
+            role: document.getElementById(`frm-resp-role-${i}`)?.value || "",
+            name: document.getElementById(`frm-resp-name-${i}`)?.value || "",
+            tel: document.getElementById(`frm-resp-tel-${i}`)?.value || ""
+        });
     }
     
     const overviewData = {
@@ -332,7 +348,8 @@ function saveOverviewData() {
         contact: document.getElementById('frm-contact')?.value,
         industry: document.getElementById('frm-industry')?.value,
         manager: document.getElementById('frm-manager')?.value,
-        service: document.getElementById('frm-service')?.value,
+        
+        responders: responders, // 배열로 저장됨
         
         areaBuild: document.getElementById('frm-area-build')?.value,
         areaTot: document.getElementById('frm-area-tot')?.value,
@@ -363,7 +380,6 @@ function saveOverviewData() {
         insM: document.getElementById('frm-ins-m')?.value
     };
     
-    localStorage.setItem('riskAssessmentOverview', JSON.stringify(overviewData));
     return overviewData;
 }
 
