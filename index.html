@@ -6,10 +6,9 @@
     <title>시니어 리스크 케어 평가 시스템</title>
     
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    
     <link rel="stylesheet" href="style.css">
     
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=발급받으신_카카오_앱키를_넣어주세요&libraries=services"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9c7de106e591f702f3debeb3004e8199&libraries=services"></script>
 </head>
 <body>
     
@@ -27,7 +26,6 @@
         
         <div class="header">
             <div class="header-title" id="main-header-title">시설 일반 현황</div>
-            
             <div class="user-info">
                 <button class="btn-top-action" style="background-color: #10b981; color: white; border: none;" onclick="masterLoadAllData()">
                     📂 이전 평가 불러오기
@@ -39,7 +37,6 @@
         </div>
 
         <div id="page-general" class="page active">
-            
             <div class="search-bar">
                 <input type="text" id="search-facility-input" placeholder="주소 또는 기관명을 입력하세요 (예: 서초구 요양원)" onkeypress="if(event.keyCode==13) searchFacility();">
                 <button onclick="searchFacility()">검색</button>
@@ -60,7 +57,7 @@
                 </div>
             </div>
 
-            <h2 id="current-info-facility-name" style="margin-bottom: 15px; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+            <h2 id="current-info-facility-name" style="margin-bottom: 15px; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
                 사업장을 검색/선택해주세요
             </h2>
             <div id="table-general-status"></div>
@@ -78,7 +75,6 @@
 
         <div id="page-report" class="page">
             <h2 style="margin-bottom: 20px;">📊 현장 평가 결과 분석</h2>
-            
             <div class="metrics-grid">
                 <div class="card">
                     <h3>총 점검 항목</h3>
@@ -118,8 +114,85 @@
     </div>
 
     <script src="generalinfo.js"></script>
-
-    <script src="main.js"></script>
+    <script src="evaluation.js"></script>
     
+    <script>
+        // 1. 시스템 통합 초기화 로직
+        window.addEventListener('DOMContentLoaded', () => {
+            // 지도 초기화 실행
+            if (typeof initMap === 'function') {
+                initMap();
+            }
+        });
+
+        // 2. 통합 메뉴 탭 전환 제어 함수
+        function showPage(pageId, element) {
+            // 모든 페이지 숨김
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            // 선택된 페이지만 노출
+            document.getElementById(pageId).classList.add('active');
+
+            // 사이드바 메뉴 하이라이트 전환
+            if(element) {
+                document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+                element.classList.add('active');
+                // 헤더 제목 매칭
+                document.getElementById('main-header-title').innerText = element.innerText.replace(/[^\w\s가-힣]/g, '').trim();
+            }
+
+            // 지도 탭으로 돌아왔을 때 레이아웃 깨짐 방지 재렌더링
+            if(pageId === 'page-general' && typeof mapInstance !== 'undefined' && mapInstance !== null) {
+                setTimeout(() => { mapInstance.relayout(); }, 100);
+            }
+        }
+
+        // 3. 통합 마스터 데이터 임시저장
+        function masterSaveAllData() {
+            let generalData = null;
+            if (typeof saveOverviewData === 'function') { 
+                generalData = saveOverviewData(); 
+            }
+
+            let evaluationData = null;
+            const evalDataNode = localStorage.getItem('fieldEvaluationData'); 
+            if(evalDataNode) { 
+                evaluationData = JSON.parse(evalDataNode); 
+            }
+
+            const currentFacilityName = (generalData && generalData.name) ? generalData.name : "미지정시설";
+            
+            const masterPackage = {
+                saveTimestamp: new Date().toISOString(),
+                facilityName: currentFacilityName,
+                generalInfo: generalData,
+                riskEvaluation: evaluationData
+            };
+
+            localStorage.setItem('masterSafetyAssessment', JSON.stringify(masterPackage));
+            alert(`[${currentFacilityName}]의 모든 현황 및 위험성평가 결과가 안전하게 통합 임시저장되었습니다.`);
+        }
+
+        // 4. 통합 마스터 데이터 불러오기
+        function masterLoadAllData() {
+            const rawData = localStorage.getItem('masterSafetyAssessment');
+            if (!rawData) {
+                alert("이전에 저장된 통합 평가 데이터가 존재하지 않습니다.");
+                return;
+            }
+
+            const masterPackage = JSON.parse(rawData);
+            
+            if (masterPackage.generalInfo) {
+                localStorage.setItem('riskAssessmentOverview', JSON.stringify(masterPackage.generalInfo));
+            }
+            if (masterPackage.riskEvaluation) {
+                localStorage.setItem('fieldEvaluationData', JSON.stringify(masterPackage.riskEvaluation));
+            }
+
+            const saveDate = new Date(masterPackage.saveTimestamp).toLocaleString('ko-KR');
+            alert(`[${masterPackage.facilityName}]의 평가 데이터를 성공적으로 불러왔습니다.\n(최종 저장일시: ${saveDate})\n\n정확한 데이터 적용을 위해 화면을 새로고침합니다.`);
+            location.reload(); 
+        }
+    </script>
 </body>
 </html>
