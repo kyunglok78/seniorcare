@@ -10,7 +10,7 @@ body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; ove
 .menu-item:hover, .menu-item.active { background-color: #334155; color: white; border-left: 4px solid #3b82f6; }
 .menu-title { padding-left: 20px; padding-top: 15px; padding-bottom: 5px; font-size: 0.8rem; color: #94a3b8; font-weight: bold; }
 
-/* 💡 좌측 하단 고정 데이터 관리 패널 스타일 */
+/* 좌측 하단 고정 데이터 관리 패널 스타일 */
 .sidebar-actions { padding: 12px; background-color: #0f172a; border-top: 1px solid #1e293b; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 .btn-sidebar-action { 
     width: 100%; padding: 9px 12px; background-color: #1e293b; color: #cbd5e1; 
@@ -35,7 +35,7 @@ body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; ove
 .page { display: none; padding: 25px 30px; flex-direction: column; overflow-y: auto; height: 100%; }
 .page.active { display: flex; }
 
-/* 💡 [완벽 교체] 절대 무너지지 않도록 Flex-shrink 차단 및 명밀 배치 */
+/* 상단 지도 및 검색 결과창 격자 고정 */
 .middle-grid { 
     display: grid !important; 
     grid-template-columns: 3fr 2fr !important; 
@@ -54,7 +54,7 @@ body { background-color: #f4f6f9; color: #333; display: flex; height: 100vh; ove
 .search-bar input { flex-grow: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
 .search-bar button { padding: 10px 20px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-/* 하단 일반 현황 폼 100% 가득 찬 테이블 선언 */
+/* 하단 일반 현황 폼 100% 가득 찬 테이블 */
 #table-general-status { width: 100% !important; max-width: 100% !important; display: block !important; margin-top: 15px; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
 th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
