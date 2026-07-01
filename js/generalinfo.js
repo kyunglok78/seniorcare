@@ -258,4 +258,60 @@ function restoreFormUIData(data) {
         if(document.getElementById('frm-vul-chi')) document.getElementById('frm-vul-chi').value = data.vulChi || "";
         if(document.getElementById('frm-vul-dis')) document.getElementById('frm-vul-dis').value = data.vulDis || "";
         
-        if(document.getElementById('frm-ins-start')) document.
+        if(document.getElementById('frm-ins-start')) document.getElementById('frm-ins-start').value = data.insStart || "";
+        if(document.getElementById('frm-ins-end')) document.getElementById('frm-ins-end').value = data.insEnd || "";
+        if(document.getElementById('frm-ins-comp')) document.getElementById('frm-ins-comp').value = data.insComp || "";
+        if(document.getElementById('frm-ins-p')) document.getElementById('frm-ins-p').value = data.insP || "";
+        if(document.getElementById('frm-ins-m')) document.getElementById('frm-ins-m').value = data.insM || "";
+    }, 200);
+}
+
+function saveOverviewData() {
+    const nameEl = document.getElementById('frm-name');
+    if(!nameEl || !nameEl.value.trim()) return null;
+    
+    const responders = [];
+    for (let i = 1; i <= 5; i++) {
+        responders.push({
+            role: document.getElementById(`frm-resp-role-${i}`)?.value || "",
+            name: document.getElementById(`frm-resp-name-${i}`)?.value || "",
+            tel: document.getElementById(`frm-resp-tel-${i}`)?.value || ""
+        });
+    }
+    
+    return {
+        name: nameEl.value,
+        ceo: document.getElementById('frm-ceo')?.value,
+        address: document.getElementById('frm-addr')?.value,
+        contact: document.getElementById('frm-contact')?.value,
+        industry: document.getElementById('frm-industry')?.value,
+        manager: document.getElementById('frm-manager')?.value,
+        responders: responders,
+        areaBuild: document.getElementById('frm-area-build')?.value,
+        areaTot: document.getElementById('frm-area-tot')?.value,
+        usage: document.getElementById('frm-usage')?.value,
+        fireClass: document.getElementById('frm-fire-class')?.value,
+        bldCnt: document.getElementById('frm-bld-cnt')?.value,
+        flrG: document.getElementById('frm-flr-g')?.value,
+        flrU: document.getElementById('frm-flr-u')?.value,
+        structure: document.getElementById('frm-structure')?.value,
+        stair: document.getElementById('frm-stair')?.value,
+        elev: document.getElementById('frm-elev')?.value,
+        park: document.getElementById('frm-park')?.value,
+        resTot: document.getElementById('frm-res-tot')?.value,
+        res1: document.getElementById('frm-res-1')?.value,
+        res2: document.getElementById('frm-res-2')?.value,
+        empTot: document.getElementById('frm-emp-tot')?.value,
+        empD: document.getElementById('frm-emp-d')?.value,
+        empN: document.getElementById('frm-emp-n')?.value,
+        vulOld: document.getElementById('frm-vul-old')?.value,
+        vulChi: document.getElementById('frm-vul-chi')?.value,
+        vulDis: document.getElementById('frm-vul-dis')?.value,
+        insStart: document.getElementById('frm-ins-start')?.value,
+        insEnd: document.getElementById('frm-ins-end')?.value,
+        insComp: document.getElementById('frm-ins-comp')?.value,
+        insP: document.getElementById('frm-ins-p')?.value,
+        insM: document.getElementById('frm-ins-m')?.value
+    };
+}
+function fetchFacilityData() {} function loadMockFacilities() {}
