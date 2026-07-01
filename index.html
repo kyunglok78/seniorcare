@@ -30,12 +30,14 @@
         </div>
 
         <div class="sidebar-actions">
-            <div class="menu-title" style="padding-left: 5px; padding-top: 0; color: #94a3b8;">DATA MANAGEMENT</div>
+            <div class="menu-title" style="padding-left: 5px; padding-top: 0; color: #94a3b8; margin-bottom: 3px;">DATA MANAGEMENT</div>
             <button class="btn-sidebar-action btn-db" onclick="alert('📊 사고사례 DB 매칭 모듈 준비 중입니다.')">📊 사고사례 DB 조회</button>
             <button class="btn-sidebar-action btn-save" onclick="masterSaveAllData()">💾 현재 상태 임시저장</button>
             <button class="btn-sidebar-action btn-load" onclick="masterLoadAllData()">📂 임시저장 불러오기</button>
             
-            <div style="height: 1px; background-color: #334155; margin: 5px 0;"></div> <button class="btn-sidebar-action btn-import" onclick="document.getElementById('pc-file-upload').click()">📥 PC 파일 불러오기</button>
+            <div style="height: 1px; background-color: #334155; margin: 3px 0;"></div>
+            
+            <button class="btn-sidebar-action btn-import" onclick="document.getElementById('pc-file-upload').click()">📥 PC 파일 불러오기</button>
             <input type="file" id="pc-file-upload" style="display:none" accept=".json" onchange="importFromPC(event)">
             <button class="btn-sidebar-action btn-export" onclick="exportToPC()">📤 PC로 파일 백업하기</button>
         </div>
@@ -57,11 +59,11 @@
             </div>
 
             <div class="middle-grid">
-                <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden;">
-                    <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">
+                <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+                    <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b; flex-shrink: 0;">
                         검색 결과 <span id="search-count-badge" class="status-badge status-good">0</span>
                     </div>
-                    <div id="facility-list-container" class="list-container">
+                    <div id="facility-list-container" class="list-container" style="flex-grow: 1; overflow-y: auto;">
                         <div style="padding: 30px 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">검색어를 입력해주세요.</div>
                     </div>
                 </div>
@@ -126,7 +128,6 @@
             }
         });
 
-        // 타이틀 동기화 매니저
         function updateGlobalFacilityLink(name) {
             if(!name) return;
             globalSelectedFacilityName = name;
@@ -144,7 +145,6 @@
             if(reportTitle) reportTitle.innerHTML = `📊 현장 평가 결과 분석 <span style="font-size:1rem; color:#2563eb; font-weight:normal;">[대상: ${name}]</span>`;
         }
 
-        // 탭 이동 시 자동 임시저장
         function showPage(pageId, element) {
             if (typeof saveOverviewData === 'function') {
                 const currentOverview = saveOverviewData();
@@ -168,7 +168,6 @@
             }
         }
 
-        // 💡 1. 통합 마스터 데이터 브라우저 임시저장 로직
         function masterSaveAllData(silent = false) {
             let generalData = null;
             if (typeof saveOverviewData === 'function') generalData = saveOverviewData(); 
@@ -191,15 +190,14 @@
             localStorage.setItem('masterSafetyAssessment', JSON.stringify(masterPackage));
             
             if(!silent) {
-                alert(`[${currentFacilityName}] 일반현황 및 위험평가 결과가 시스템에 임시저장되었습니다.`);
+                alert(`[${currentFacilityName}] 데이터가 통합 임시저장되었습니다.`);
             }
         }
 
-        // 💡 2. 통합 마스터 데이터 브라우저 불러오기 로직
         function masterLoadAllData() {
             const rawData = localStorage.getItem('masterSafetyAssessment');
             if (!rawData) {
-                alert("불러올 수 있는 마스터 통합 데이터 패키지가 존재하지 않습니다.");
+                alert("통합 임시저장된 데이터 패키지가 없습니다.");
                 return;
             }
 
@@ -213,29 +211,25 @@
             }
 
             const saveDate = new Date(masterPackage.saveTimestamp).toLocaleString('ko-KR');
-            alert(`[${masterPackage.facilityName}] 통합 데이터를 복원했습니다.\n(최종 커밋 일시: ${saveDate})\n\n정상 반영을 위해 화면을 새로고침합니다.`);
+            alert(`[${masterPackage.facilityName}] 통합 데이터를 복원했습니다.\n(최종 커밋 일시: ${saveDate})\n\n화면을 새로고침합니다.`);
             location.reload(); 
         }
 
-        // 💡 3. PC 파일(.json) 전체 백업 다운로드
         function exportToPC() {
-            // 저장 전 최신상태 갱신 (경고창 띄우지 않음)
             masterSaveAllData(true); 
-            
             const rawData = localStorage.getItem('masterSafetyAssessment');
             if(!rawData) {
-                alert("백업할 평가 데이터가 없습니다. 먼저 내용을 입력해주세요.");
+                alert("백업할 데이터가 존재하지 않습니다.");
                 return;
             }
 
-            // JSON 파일 생성 및 다운로드 강제 실행
             const blob = new Blob([rawData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             
             const facilityName = globalSelectedFacilityName !== "미지정시설" ? globalSelectedFacilityName : "통합평가데이터";
-            const dateStr = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+            const dateStr = new Date().toISOString().slice(0,10);
             a.download = `위험성평가백업_${facilityName}_${dateStr}.json`;
             
             document.body.appendChild(a);
@@ -244,7 +238,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // 💡 4. PC 파일(.json) 불러와서 전체 시스템에 덮어쓰기
         function importFromPC(event) {
             const file = event.target.files[0];
             if(!file) return;
@@ -253,20 +246,16 @@
             reader.onload = function(e) {
                 try {
                     const parsedData = JSON.parse(e.target.result);
-                    
-                    // 신규 통합 마스터 포맷인지 확인
                     if(parsedData && parsedData.saveTimestamp && parsedData.generalInfo) {
                         localStorage.setItem('masterSafetyAssessment', JSON.stringify(parsedData));
-                        
-                        // 로컬 스토리지에 세팅 완료 후 불러오기 함수 실행
                         masterLoadAllData();
                     } else {
-                        alert("통합 평가 데이터 포맷이 아닙니다. 최신 버전에서 백업한 JSON 파일을 선택해주세요.");
+                        alert("올바른 통합 평가 JSON 백업 파일이 아닙니다.");
                     }
                 } catch(err) {
-                    alert('파일을 읽는 도중 오류가 발생했습니다. 정상적인 백업 파일인지 확인해주세요.');
+                    alert('파일을 읽는 도중 오류가 발생했습니다.');
                 }
-                event.target.value = ''; // 다음 파일을 위해 input 초기화
+                event.target.value = '';
             };
             reader.readAsText(file);
         }

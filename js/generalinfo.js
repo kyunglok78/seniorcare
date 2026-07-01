@@ -20,7 +20,6 @@ function initMap() {
     infowindow = new kakao.maps.InfoWindow({zIndex:1});
     mapInstance.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
 
-    // 최초 로드 시 로컬 데이터 복원 추적
     const saved = localStorage.getItem('riskAssessmentOverview');
     if(saved) {
         const data = JSON.parse(saved);
@@ -169,7 +168,7 @@ function renderOverviewForm(name, address) {
                             <td colspan="2" style="border:1px solid #cbd5e1;">건축동수 <input type="number" id="frm-bld-cnt" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개동 (지상 <input type="number" id="frm-flr-g" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층 / 지하 <input type="number" id="frm-flr-u" ${numInputFilter} style="width:30px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 층)</td>
                         </tr>
                         <tr>
-                            <td colspan="2" style="border:1px solid #cbd5e1;">건물구조: <input type="text" id="frm-structure" style="width:250px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="예: 철근콘크리트조/슬래브"></td>
+                            <td colspan="2" style="border:1px solid #cbd5e1;">建物구조: <input type="text" id="frm-structure" style="width:250px; border:none; border-bottom:1px solid #94a3b8; outline:none;" placeholder="예: 철근콘크리트조/슬래브"></td>
                         </tr>
                         <tr>
                             <td colspan="2" style="border:1px solid #cbd5e1;">피난계단 <input type="number" id="frm-stair" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 개소 | 승강기 <input type="number" id="frm-elev" ${numInputFilter} style="width:40px; border:none; border-bottom:1px solid #94a3b8; outline:none; text-align:center;"> 대 | 주차장: <input type="text" id="frm-park" style="width:120px; border:none; border-bottom:1px solid #94a3b8; outline:none;"></td>
@@ -217,16 +216,6 @@ function renderOverviewForm(name, address) {
 
     if(targetGenTable) {
         targetGenTable.innerHTML = formHTML;
-        
-        // 부모 폭 압축 족쇄 풀기 강제 스크립트 커밋
-        let leftEl = targetGenTable;
-        while(leftEl && leftEl.parentElement) {
-            leftEl.style.width = '100%'; leftEl.style.maxWidth = '100%'; leftEl.style.flex = '0 0 100%';
-            if (leftEl.parentElement.contains(document.getElementById('table-instt-status'))) {
-                leftEl.parentElement.style.display = 'block'; break;
-            }
-            leftEl = leftEl.parentElement;
-        }
     }
 }
 
@@ -269,60 +258,4 @@ function restoreFormUIData(data) {
         if(document.getElementById('frm-vul-chi')) document.getElementById('frm-vul-chi').value = data.vulChi || "";
         if(document.getElementById('frm-vul-dis')) document.getElementById('frm-vul-dis').value = data.vulDis || "";
         
-        if(document.getElementById('frm-ins-start')) document.getElementById('frm-ins-start').value = data.insStart || "";
-        if(document.getElementById('frm-ins-end')) document.getElementById('frm-ins-end').value = data.insEnd || "";
-        if(document.getElementById('frm-ins-comp')) document.getElementById('frm-ins-comp').value = data.insComp || "";
-        if(document.getElementById('frm-ins-p')) document.getElementById('frm-ins-p').value = data.insP || "";
-        if(document.getElementById('frm-ins-m')) document.getElementById('frm-ins-m').value = data.insM || "";
-    }, 200);
-}
-
-function saveOverviewData() {
-    const nameEl = document.getElementById('frm-name');
-    if(!nameEl || !nameEl.value.trim()) return null;
-    
-    const responders = [];
-    for (let i = 1; i <= 5; i++) {
-        responders.push({
-            role: document.getElementById(`frm-resp-role-${i}`)?.value || "",
-            name: document.getElementById(`frm-resp-name-${i}`)?.value || "",
-            tel: document.getElementById(`frm-resp-tel-${i}`)?.value || ""
-        });
-    }
-    
-    return {
-        name: nameEl.value,
-        ceo: document.getElementById('frm-ceo')?.value,
-        address: document.getElementById('frm-addr')?.value,
-        contact: document.getElementById('frm-contact')?.value,
-        industry: document.getElementById('frm-industry')?.value,
-        manager: document.getElementById('frm-manager')?.value,
-        responders: responders,
-        areaBuild: document.getElementById('frm-area-build')?.value,
-        areaTot: document.getElementById('frm-area-tot')?.value,
-        usage: document.getElementById('frm-usage')?.value,
-        fireClass: document.getElementById('frm-fire-class')?.value,
-        bldCnt: document.getElementById('frm-bld-cnt')?.value,
-        flrG: document.getElementById('frm-flr-g')?.value,
-        flrU: document.getElementById('frm-flr-u')?.value,
-        structure: document.getElementById('frm-structure')?.value,
-        stair: document.getElementById('frm-stair')?.value,
-        elev: document.getElementById('frm-elev')?.value,
-        park: document.getElementById('frm-park')?.value,
-        resTot: document.getElementById('frm-res-tot')?.value,
-        res1: document.getElementById('frm-res-1')?.value,
-        res2: document.getElementById('frm-res-2')?.value,
-        empTot: document.getElementById('frm-emp-tot')?.value,
-        empD: document.getElementById('frm-emp-d')?.value,
-        empN: document.getElementById('frm-emp-n')?.value,
-        vulOld: document.getElementById('frm-vul-old')?.value,
-        vulChi: document.getElementById('frm-vul-chi')?.value,
-        vulDis: document.getElementById('frm-vul-dis')?.value,
-        insStart: document.getElementById('frm-ins-start')?.value,
-        insEnd: document.getElementById('frm-ins-end')?.value,
-        insComp: document.getElementById('frm-ins-comp')?.value,
-        insP: document.getElementById('frm-ins-p')?.value,
-        insM: document.getElementById('frm-ins-m')?.value
-    };
-}
-function fetchFacilityData() {} function loadMockFacilities() {}
+        if(document.getElementById('frm-ins-start')) document.
