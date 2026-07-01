@@ -6,227 +6,224 @@
     <title>Senior Risk Care - 통합 리스크 관리 시스템</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9c7de106e591f702f3debeb3004e8199&libraries=services"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     
     <style>
-        .facility-list-item {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .facility-list-item:hover {
-            background-color: #f1f5f9;
-        }
-        .facility-list-item.active {
-            background-color: #e0f2fe;
-            border-left: 3px solid #3b82f6;
-        }
-        .facility-list-name {
-            font-weight: bold;
-            color: #0f172a;
-            font-size: 0.95rem;
-            margin-bottom: 4px;
-        }
-        .facility-list-addr {
-            font-size: 0.8rem;
-            color: #64748b;
-        }
+        .facility-list-item { padding: 12px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background-color 0.2s; }
+        .facility-list-item:hover { background-color: #f1f5f9; }
+        .facility-list-item.active { background-color: #e0f2fe; border-left: 3px solid #3b82f6; }
+        .facility-list-name { font-weight: bold; color: #0f172a; font-size: 0.95rem; }
+        .facility-list-addr { font-size: 0.82rem; color: #64748b; margin-top: 4px; }
+        .linked-title-badge { background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: bold; margin-left: 10px; border: 1px solid #bae6fd; }
     </style>
 </head>
 <body>
-
+    
     <div class="sidebar">
-        <div class="logo">🛡️ Senior Risk Care</div>
+        <div class="logo">🔍 리스크 케어 시스템</div>
         <div class="menu">
-            <a onclick="navigate('dashboard')" id="menu-dashboard" class="menu-item active">📊 대시보드 (Home)</a>
-            
-            <div class="menu-title">기관 정보 관리</div>
-            <a onclick="navigate('facility-info')" id="menu-facility-info" class="menu-item">📋 시설 일반 현황</a>
-
-            <div class="menu-title">위험 관리 모듈</div>
-            <a onclick="navigate('evaluation')" id="menu-evaluation" class="menu-item">📝 현장 위험 평가</a>
-            <a onclick="navigate('result')" id="menu-result" class="menu-item">📈 안전점검 결과</a>
-            <a onclick="navigate('recommendation')" id="menu-recommendation" class="menu-item">💡 권장사항 작성</a>
-            <a onclick="navigate('report')" id="menu-report" class="menu-item">📄 보고서 작성</a>
-            
-            <div class="menu-title">시스템 DB</div>
-            <a href="#" class="menu-item">📑 보고서 통합관리</a>
-            <a href="#" class="menu-item">🚨 사고사례 DB</a>
+            <div class="menu-title">MENU</div>
+            <a class="menu-item active" onclick="showPage('page-general', this)">📋 시설 일반 현황</a>
+            <a class="menu-item" onclick="showPage('page-eval', this)">📝 현장 위험 평가</a>
+            <a class="menu-item" onclick="showPage('page-report', this)">📊 결과 분석 및 보고서</a>
         </div>
     </div>
 
     <div class="main-content">
+        
         <div class="header">
-            <div class="header-title" id="top-title">통합 대시보드</div>
+            <div class="header-title" style="display: flex; align-items: center;">
+                <span id="main-header-title">시설 일반 현황</span>
+                <span id="global-linked-facility-badge" class="linked-title-badge" style="display:none;">선택 기관: 없음</span>
+            </div>
+            
             <div class="user-info">
-                <span style="font-size: 0.9rem; color:#64748b; margin-right: 15px;">👤 홍길동 평가자님</span>
-                <input type="file" id="file-input" style="display: none;" accept=".json" onchange="loadFromFile(event)">
-                <button class="btn-load" id="btn-load" style="display:none;" onclick="document.getElementById('file-input').click()">📂 파일 불러오기</button>
-                <button class="btn-save" id="btn-save" style="display:none;" onclick="saveToFile()">💾 PC에 파일 저장</button>
+                <button class="btn-top-action" style="background-color: #10b981; color: white; border: none;" onclick="masterLoadAllData()">
+                    📂 이전 평가 불러오기
+                </button>
+                <button class="btn-top-action" style="background-color: #ef4444; color: white; border: none;" onclick="masterSaveAllData()">
+                    💾 위험성평가 결과 임시저장
+                </button>
             </div>
         </div>
 
-        <div id="page-dashboard" class="page active">
-            <div class="metrics-grid">
-                <div class="card"><h3>🏢 총 등록 기관</h3><div class="value">150</div></div>
-                <div class="card"><h3>✅ 당해 평가 진행률</h3><div class="value text-blue">80.0%</div></div>
-                <div class="card"><h3>📈 권장사항 이행률</h3><div class="value text-green">65.2%</div></div>
-                <div class="card"><h3>🚨 집중 관리 (고위험)</h3><div class="value text-red">12</div></div>
+        <div id="page-general" class="page active">
+            <div class="search-bar">
+                <input type="text" id="search-facility-input" placeholder="주소 또는 기관명을 입력하세요 (예: 서초구 요양원)" onkeypress="if(event.keyCode==13) searchFacility();">
+                <button onclick="searchFacility()">검색</button>
             </div>
+
             <div class="middle-grid">
-                <div class="card map-container">[지도 영역: 좌측 '기관 정보 관리 > 시설 일반 현황' 메뉴를 클릭하세요]</div>
-                <div class="card ai-note">
-                    <h3 style="color: #0369a1; border-bottom: 1px solid #bae6fd; padding-bottom: 10px; margin-bottom: 10px;">🤖 AI 맞춤형 학습 노트</h3>
-                    <p style="font-size: 0.95rem; line-height: 1.6;">
-                        <strong>[재난대비/수자원] 하천 유역 위험 관리 규정 리마인드!</strong><br><br>
-                        "국산에(1~3) / 교하수(4~6) / 산관대(7~9)!"<br>
-                        현장 나갈 때 집중호우 대비 하천 유역 평가 시 이 기준 꼭 적용하셔서 체크리스트 가중치 조정 부탁드립니다.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div id="page-facility-info" class="page">
-            
-            <div class="info-panel" style="margin-bottom: 15px; padding: 15px 20px;">
-                <div class="info-item" style="flex: 1;">
-                    <span class="info-label">전국 시설 데이터 연동</span>
-                    <span class="info-value" style="font-size: 0.95rem; font-weight: normal;">
-                        공공데이터 <strong>'국민건강보험공단 장기요양기관 정보'</strong> API와 실시간 연동 중입니다.<br>
-                        <span style="color:#0284c7; font-size:0.85rem; font-weight:bold;">💡 팁: 우측 목록이나 지도에서 기관을 선택하면 하단에 상세 제원이 자동 표출됩니다.</span>
-                    </span>
-                </div>
-                <button class="btn-save" onclick="fetchFacilityData()" style="background-color: #f59e0b; display: block; height: 100%; border:none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; padding: 0 20px; transition: 0.2s;">🔄 데이터 갱신 및 초기화</button>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <input type="text" id="search-facility-input" placeholder="기관명으로 검색하세요..." style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem;">
-                <button onclick="searchFacility()" style="padding: 10px 25px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">🔍 검색</button>
-                <button onclick="addCustomFacility()" style="padding: 10px 25px; background-color: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">➕ 신규 기관 수동 추가</button>
-            </div>
-
-            <div style="display: flex; gap: 15px; margin-bottom: 30px; height: 430px; min-height: 430px;">
-                <div style="flex: 7; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative;">
-                    <div id="kakao-map" style="width: 100%; height: 100%; border-radius: 6px; border: 1px solid #e2e8f0; z-index: 1;"></div>
-                </div>
-                <div style="flex: 3; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <div style="padding: 12px; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; font-weight: bold; color: #334155;">
-                        📋 검색 결과 목록 <span id="search-count-badge" style="background-color: #3b82f6; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.8rem; margin-left: 5px;">0</span>
+                <div style="background: white; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">
+                        검색 결과 <span id="search-count-badge" class="status-badge status-good">0</span>
                     </div>
-                    <div id="facility-list-container" style="flex: 1; overflow-y: auto; background-color: #ffffff;">
-                        <div style="padding: 30px 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">
-                            검색을 통해 기관을 조회해주세요.<br>(또는 지도에서 마커 클릭)
-                        </div>
+                    <div id="facility-list-container" class="list-container">
+                        <div style="padding: 30px 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">검색어를 입력해주세요.</div>
                     </div>
                 </div>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px;">
-                <h2 style="font-size: 1.25rem; color: #0f172a; margin: 0;">선택 기관 상세 제원: <span id="current-info-facility-name" style="color: #0269a1;">목록이나 지도에서 기관을 선택해 주세요</span></h2>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; padding-bottom: 50px;">
-                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
-                    <h3 style="color: #3b82f6; border-bottom: 2px solid #eff6ff; padding-bottom: 10px; margin-bottom: 15px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>👥 일반 현황 (인력 및 운영)</span>
-                        <button id="btn-add-gen-row" style="display:none; padding:5px 10px; font-size:12px; background-color:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="addCustomRow('table-general-status')">+ 행 추가</button>
-                    </h3>
-                    <div id="table-general-status" style="font-size: 0.9rem; color: #334155; line-height: 1.6; max-height: 500px; overflow-y: auto; padding-right: 5px;">
-                        <p style="color: #94a3b8; text-align: center; padding: 60px 0;">목록에서 기관을 선택하면<br>이곳에 데이터가 자동으로 표출됩니다.</p>
-                    </div>
-                </div>
-
-                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
-                    <h3 style="color: #10b981; border-bottom: 2px solid #ecfdf5; padding-bottom: 10px; margin-bottom: 15px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>🏢 시설 현황 (면적 및 구조)</span>
-                        <button id="btn-add-fac-row" style="display:none; padding:5px 10px; font-size:12px; background-color:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="addCustomRow('table-instt-status')">+ 행 추가</button>
-                    </h3>
-                    <div id="table-instt-status" style="font-size: 0.9rem; color: #334155; line-height: 1.6; max-height: 500px; overflow-y: auto; padding-right: 5px;">
-                        <p style="color: #94a3b8; text-align: center; padding: 60px 0;">목록에서 기관을 선택하면<br>이곳에 데이터가 자동으로 표출됩니다.</p>
-                    </div>
+                <div class="map-container">
+                    <div id="kakao-map"></div>
                 </div>
             </div>
+
+            <h2 id="current-info-facility-name" style="margin-bottom: 15px; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                사업장을 검색/선택해주세요
+            </h2>
+            <div id="table-general-status"></div>
+            <div id="table-instt-status" style="display:none;"></div>
         </div>
 
-        <div id="page-evaluation" class="page">
-            <div class="info-panel">
-                <div class="info-item"><span class="info-label">대상 기관명</span><span class="info-value">선택된 기관 없음</span></div>
-                <div class="info-item"><span class="info-label">평가 일자</span><span class="info-value">2026-06-27</span></div>
-                <div class="info-item"><span class="info-label">진행 상태</span><span class="info-value" style="color: #3b82f6;">작성 중</span></div>
-            </div>
-            <div class="tabs">
-                <div class="tab active" onclick="switchEvalTab('fire')" id="tab-fire">🔥 화재사고 평가</div>
-                <div class="tab" onclick="switchEvalTab('safety')" id="tab-safety">👷 안전사고 평가</div>
-            </div>
-            <table class="evaluation-table" id="table-fire">
-                <thead><tr><th class="col-item">점검항목</th><th class="col-score">문항합계</th><th class="col-input">현장 점수</th><th class="col-input">이행후 점수</th><th class="col-remark">비고 및 소견</th></tr></thead>
-                <tbody id="tbody-fire"></tbody>
-            </table>
-            <table class="evaluation-table hidden" id="table-safety">
-                <thead><tr><th class="col-item">점검항목</th><th class="col-score">문항합계</th><th class="col-input">현장 점수</th><th class="col-input">이행후 점수</th><th class="col-remark">비고 및 소견</th></tr></thead>
-                <tbody id="tbody-safety"></tbody>
-            </table>
-        </div>
-
-        <div id="page-result" class="page">
-            <div class="tabs">
-                <div class="tab active" onclick="switchResultTab('fire')" id="rtab-fire">🔥 화재사고 점검결과</div>
-                <div class="tab" onclick="switchResultTab('safety')" id="rtab-safety">👷 안전사고 점검결과</div>
-            </div>
-            <div class="chart-section"><div class="chart-row-top"><div class="chart-box-radar"><canvas id="radarChart"></canvas></div></div><div class="chart-grid-bottom" id="barChartsGrid"></div></div>
-            <div id="res-fire-container"><table class="result-table"><thead><tr><th style="width: 20%;">대분류</th><th style="width: 40%;">중분류</th><th style="width: 8%;">배점</th><th style="width: 8%;">현장 평가</th><th style="width: 8%;">달성률</th><th style="width: 8%;">이행 후 평가</th><th style="width: 8%;">달성률</th></tr></thead><tbody id="tbody-res-fire"></tbody></table></div>
-            <div id="res-safety-container" class="hidden"><table class="result-table"><thead><tr><th style="width: 20%;">대분류</th><th style="width: 40%;">중분류</th><th style="width: 8%;">배점</th><th style="width: 8%;">현장 평가</th><th style="width: 8%;">달성률</th><th style="width: 8%;">이행 후 평가</th><th style="width: 8%;">달성률</th></tr></thead><tbody id="tbody-res-safety"></tbody></table></div>
-        </div>
-
-        <div id="page-recommendation" class="page">
-            <div class="info-panel" style="margin-bottom: 15px; width: 100%; flex-shrink: 0;"><div class="info-item"><span class="info-label">안내</span><span class="info-value" style="font-size: 0.95rem;">체크박스를 이용해 일괄 숨김 관리가 가능합니다.</span></div></div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; padding-bottom: 0;">
-                <div class="tabs" style="margin-bottom: 0; border-bottom: none;">
-                    <div class="tab active" onclick="switchRecTab('list')" id="rectab-list">📋 요약 목록</div>
-                    <div class="tab" onclick="switchRecTab('detail')" id="rectab-detail">📝 세부내용</div>
-                    <div class="tab" onclick="switchRecTab('impl')" id="rectab-impl" style="color: #059669;">✅ 이행관리</div>
-                </div>
-                <div style="display: flex; gap: 8px; margin-bottom: 5px;">
-                    <button class="btn-top-action" style="background-color: #f1f5f9; border: 1px solid #cbd5e1;" onclick="addManualRec()">+ 추가</button>
-                    <button class="btn-top-action" style="background-color: #fef08a; border: 1px solid #fde047;" onclick="hideSelectedRecs()">☑️ 선택 숨기기</button>
-                    <button class="btn-top-action" style="background-color: #fffbeb; border: 1px solid #fde68a;" onclick="hideUnmodifiedRecs()">👁️‍🗨️ 미수정 숨기기</button>
-                    <button class="btn-top-action" style="background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;" onclick="showHiddenRecs()">👁️ 숨김 표시 복구</button>
+        <div id="page-eval" class="page">
+            <h2 style="margin-bottom: 20px;" id="eval-page-title">📝 현장 위험 평가</h2>
+            <div class="eval-section">
+                <div style="background: white; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <p style="color: #64748b;">현장 위험 평가 체크리스트 항목들이 로드됩니다.</p>
                 </div>
             </div>
-            <div id="rec-view-list" style="width: 100%;"><table class="rec-list-table"><thead><tr><th style="width: 3%;"><input type="checkbox" onclick="toggleAllRecs(this)"></th><th class="rec-col-num">번호</th><th class="rec-col-type">구 분</th><th class="rec-col-maj">대분류</th><th class="rec-col-min">중분류</th><th class="rec-col-desc">권장사항</th><th class="rec-col-status">이행 현황</th><th class="rec-col-manage">관리</th></tr></thead><tbody id="tbody-rec-list"></tbody></table></div>
-            <div id="rec-view-detail" class="hidden" style="width: 100%;"><div id="rec-detail-wrapper"></div></div>
-            <div id="rec-view-impl" class="hidden" style="width: 100%;"><div id="rec-impl-wrapper"></div></div>
         </div>
 
         <div id="page-report" class="page">
-            <div class="info-panel" style="margin-bottom: 10px;">
-                <div class="info-item" style="flex: 1;"><span class="info-label">안내</span><span class="info-value" style="font-size: 0.95rem;">우측 인쇄 버튼을 눌러 PDF로 저장하거나 출력하세요.</span></div>
-                <button class="btn-save btn-print-top" onclick="window.print()" style="background-color: #0f172a; height: 100%;">🖨️ PDF 저장 / 출력</button>
-            </div>
-            <div class="report-wrapper">
-                <div class="report-container">
-                    <div class="report-cover page-break-after">
-                        <h1 style="font-size: 2.5rem; text-align: center; margin-top: 150px; color: #1e293b; line-height: 1.4;">노인요양기관 안전관리 컨설팅<br>종합보고서</h1>
-                        <h2 style="font-size: 1.5rem; text-align: center; margin-top: 40px; color: #475569;" id="report-facility-name-cover">[기관명 미지정]</h2>
-                        <div style="text-align: center; margin-top: 250px; font-size: 1.2rem; color: #64748b;" id="report-date-cover">2026.06</div>
-                        <div style="text-align: center; margin-top: 50px; font-size: 1.5rem; font-weight: bold; color: #f59e0b;">KB손해사정 위험관리연구소</div>
-                    </div>
+            <h2 style="margin-bottom: 20px;" id="report-page-title">📊 현장 평가 결과 분석</h2>
+            <div class="metrics-grid">
+                <div class="card">
+                    <h3>총 점검 항목</h3>
+                    <div class="value text-blue">0건</div>
+                </div>
+                <div class="card">
+                    <h3>안전 (Good)</h3>
+                    <div class="value text-green">0건</div>
+                </div>
+                <div class="card">
+                    <h3>주의 (Warning)</h3>
+                    <div class="value" style="color: #f59e0b;">0건</div>
+                </div>
+                <div class="card">
+                    <h3>위험 (Danger)</h3>
+                    <div class="value text-red">0건</div>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <script src="js/evaluation.js"></script>
-    <script src="js/generalinfo.js"></script>
+    <script src="generalinfo.js"></script>
+    <script src="evaluation.js"></script>
     
     <script>
-        window.onload = function() {
-            // 초기 화면이 대시보드이므로 지도는 안 보일 수 있지만, 인스턴스는 준비시켜둠
-            if(typeof initMap === 'function') {
-                setTimeout(initMap, 300);
+        // 전역 변수로 선택된 기관명을 관리 (링크 동기화용)
+        let globalSelectedFacilityName = "미지정시설";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof initMap === 'function') {
+                initMap();
             }
-        };
+            // 기존 임시 세션이 있다면 상단 배지 복원
+            const saved = localStorage.getItem('riskAssessmentOverview');
+            if(saved) {
+                const data = JSON.parse(saved);
+                if(data.name) updateGlobalFacilityLink(data.name);
+            }
+        });
+
+        // 기관명 링크 상태 업데이트 전역 매니저
+        function updateGlobalFacilityLink(name) {
+            if(!name) return;
+            globalSelectedFacilityName = name;
+            
+            // 1. 헤더 영역 배지 링크 반영
+            const badge = document.getElementById('global-linked-facility-badge');
+            if(badge) {
+                badge.innerText = `대상 기관: ${name}`;
+                badge.style.display = 'inline-block';
+            }
+            // 2. 다른 위험평가 모듈 타이틀 내부 텍스트 갱신 연동
+            const evalTitle = document.getElementById('eval-page-title');
+            if(evalTitle) evalTitle.innerHTML = `📝 현장 위험 평가 <span style="font-size:1rem; color:#2563eb; font-weight:normal;">[대상: ${name}]</span>`;
+            
+            const reportTitle = document.getElementById('report-page-title');
+            if(reportTitle) reportTitle.innerHTML = `📊 현장 평가 결과 분석 <span style="font-size:1rem; color:#2563eb; font-weight:normal;">[대상: ${name}]</span>`;
+        }
+
+        // 💡 [요청 3 반영] 탭 전환 시 상시 백그라운드 자동 임시저장 프로토콜
+        function showPage(pageId, element) {
+            console.log("[Auto-Save] 사용자가 탭을 전환하여 현재 입력 상태를 자동 백업합니다.");
+            if (typeof saveOverviewData === 'function') {
+                const currentOverview = saveOverviewData();
+                if(currentOverview && currentOverview.name) {
+                    localStorage.setItem('riskAssessmentOverview', JSON.stringify(currentOverview));
+                    updateGlobalFacilityLink(currentOverview.name);
+                }
+            }
+
+            // 레이아웃 전환 제어
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            if(element) {
+                document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+                element.classList.add('active');
+                document.getElementById('main-header-title').innerText = element.innerText.replace(/[^\w\s가-힣]/g, '').trim();
+            }
+
+            if(pageId === 'page-general' && typeof mapInstance !== 'undefined' && mapInstance !== null) {
+                setTimeout(() => { mapInstance.relayout(); }, 100);
+            }
+        }
+
+        // 💡 [요청 1 반영] 사고사례 DB와 결합 가능한 마스터 패키지 빌더
+        function masterSaveAllData() {
+            // 일반현황 현재 입력 데이터 강제 수집
+            let generalData = null;
+            if (typeof saveOverviewData === 'function') { 
+                generalData = saveOverviewData(); 
+            }
+
+            // 위험 평가 모듈 입력 상태 수집
+            let evaluationData = null;
+            const evalDataNode = localStorage.getItem('fieldEvaluationData'); 
+            if(evalDataNode) { 
+                evaluationData = JSON.parse(evalDataNode); 
+            }
+
+            // 🔍 미래형 통합 아키텍처: 사고사례 레코드 데이터 동시 패키징
+            let accidentDBReference = localStorage.getItem('accidentDB_Reference') || [];
+
+            const currentFacilityName = (generalData && generalData.name) ? generalData.name : globalSelectedFacilityName;
+            
+            const masterPackage = {
+                saveTimestamp: new Date().toISOString(),
+                facilityName: currentFacilityName,
+                generalInfo: generalData,
+                riskEvaluation: evaluationData,
+                accidentHistory: accidentDBReference // 사고사례 데이터 링킹 연동 구조 확보
+            };
+
+            localStorage.setItem('masterSafetyAssessment', JSON.stringify(masterPackage));
+            alert(`[${currentFacilityName}] 일반현황 및 위험평가 결과가 사고사례 참조 정보와 함께 통합 임시저장되었습니다.`);
+        }
+
+        function masterLoadAllData() {
+            const rawData = localStorage.getItem('masterSafetyAssessment');
+            if (!rawData) {
+                alert("불러올 수 있는 마스터 통합 데이터 패키지가 존재하지 않습니다.");
+                return;
+            }
+
+            const masterPackage = JSON.parse(rawData);
+            
+            if (masterPackage.generalInfo) {
+                localStorage.setItem('riskAssessmentOverview', JSON.stringify(masterPackage.generalInfo));
+                updateGlobalFacilityLink(masterPackage.generalInfo.name);
+            }
+            if (masterPackage.riskEvaluation) {
+                localStorage.setItem('fieldEvaluationData', JSON.stringify(masterPackage.riskEvaluation));
+            }
+
+            const saveDate = new Date(masterPackage.saveTimestamp).toLocaleString('ko-KR');
+            alert(`[${masterPackage.facilityName}] 통합 패키지 데이터를 원격 세션에서 복원했습니다.\n(최종 커밋 일시: ${saveDate})`);
+            location.reload(); 
+        }
     </script>
 </body>
 </html>
